@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library'
+}
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation('network.casper:casper-java-sdk') {
+        version {
+            branch = 'main'
+        }
+    }
+    testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
+}
+
+test {
+    useJUnitPlatform()
+}

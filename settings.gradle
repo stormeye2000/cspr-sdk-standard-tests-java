@@ -1,0 +1,6 @@
+rootProject.name = 'cspr-java-sdk-evaluation'
+sourceControl {
+    gitRepository("https://github.com/stormeye2000/casper-java-sdk.git") {
+        producesModule("network.casper:casper-java-sdk")
+    }
+}
