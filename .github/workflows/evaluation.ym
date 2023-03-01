@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Service containers to run with `runner-job`
+    services:
+      # Label used to access the service container
+      casper-nctl:
+        # Docker Hub image
+        image: makesoftware/casper-nctl:latest
+        options: --name casper-nctl
+        env:
+          PREDEFINED_ACCOUNTS: 'true'
+          MINIMUM_ROUND_EXPONENT: '12'
+          MAXIMUM_ROUND_EXPONENT: '14'
+          DEPLOY_DELAY: '12sec'
+        ports:
+          # Opens RPC, REST and events ports on the host and service container
+          - 11101:11101
+          - 14101:14101
+          - 18101:18101
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
