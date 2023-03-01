@@ -26,8 +26,7 @@ jobs:
           - 11101:11101
           - 14101:14101
           - 18101:18101
-  build:
-    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
