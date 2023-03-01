@@ -1,4 +1,4 @@
-name: CI
+name: Integration Tests
 
 on:
   # Allows you to run this workflow manually from the Actions tab
@@ -10,22 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     # Service containers to run with `runner-job`
-    services:
-      # Label used to access the service container
-      casper-nctl:
-        # Docker Hub image
-        image: makesoftware/casper-nctl:latest
-        options: --name casper-nctl
-        env:
-          PREDEFINED_ACCOUNTS: 'true'
-          MINIMUM_ROUND_EXPONENT: '12'
-          MAXIMUM_ROUND_EXPONENT: '14'
-          DEPLOY_DELAY: '12sec'
-        ports:
-          # Opens RPC, REST and events ports on the host and service container
-          - 11101:11101
-          - 14101:14101
-          - 18101:18101
+#    services:
+#      # Label used to access the service container
+#      casper-nctl:
+#        # Docker Hub image
+#        image: makesoftware/casper-nctl:latest
+#        options: --name casper-nctl
+#        env:
+#          PREDEFINED_ACCOUNTS: 'true'
+#          MINIMUM_ROUND_EXPONENT: '12'
+#          MAXIMUM_ROUND_EXPONENT: '14'
+#          DEPLOY_DELAY: '12sec'
+#        ports:
+#          # Opens RPC, REST and events ports on the host and service container
+#          - 11101:11101
+#          - 14101:14101
+#          - 18101:18101
 
     steps:
       - name: Checkout code
@@ -40,5 +40,5 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Test with Gradle
         run: ./gradlew clean test
