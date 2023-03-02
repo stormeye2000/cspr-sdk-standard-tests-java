@@ -23,7 +23,6 @@ jobs:
         run: |
           echo "Wait for NCTL"
           sleep 10s
-
       - name: Checkout code
         uses: actions/checkout@v2
 
