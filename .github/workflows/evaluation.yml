@@ -1,18 +1,10 @@
-name: Integration Tests
-
+name: Deploy
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  push:
-    branches:
-      - main
-
 jobs:
-  integration-test:
-    # The type of runner that the job will run on
+  build:
+    name: Setting Up NCTL
     runs-on: ubuntu-latest
-
-    # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
       casper-nctl:
@@ -23,14 +15,18 @@ jobs:
           PREDEFINED_ACCOUNTS: 'true'
           MINIMUM_ROUND_EXPONENT: '12'
           MAXIMUM_ROUND_EXPONENT: '14'
-          DEPLOY_DELAY: '12sec'
+          DEPLOY_DELAY: '30sec'
         ports:
           # Opens RPC, REST and events ports on the host and service container
           - 11101:11101
           - 14101:14101
           - 18101:18101
-
     steps:
+      - name: Setting Up Integration Tests
+        run: |
+          echo "Wait for NCTL"
+          sleep 10s
+
       - name: Checkout code
         uses: actions/checkout@v2
 
