@@ -1,15 +1,32 @@
 name: Deploy
+
 on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
 jobs:
   build:
-    name: Run API
+    name: Run Evaluations
     runs-on: ubuntu-latest
+    services:
+      # Label used to access the service container
+      casper-nctl:
+        # Docker Hub image
+        image: makesoftware/casper-nctl:latest
+        options: --name casper-nctl
+        env:
+          PREDEFINED_ACCOUNTS: 'true'
+          MINIMUM_ROUND_EXPONENT: '12'
+          MAXIMUM_ROUND_EXPONENT: '14'
+          DEPLOY_DELAY: '30sec'
+        ports:
+          # Opens RPC, REST and events ports on the host and service container
+          - 11101:11101
+          - 14101:14101
+          - 18101:18101
     steps:
       - name: Build API
         run: |
           echo "Build API"
-          sleep 10s
+          sleep 30s
