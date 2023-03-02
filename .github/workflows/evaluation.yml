@@ -1,4 +1,4 @@
-name: Deploy
+name: NCTL Integration Tests
 on:
   workflow_dispatch:
 jobs:
@@ -6,9 +6,7 @@ jobs:
     name: Setting Up NCTL
     runs-on: ubuntu-latest
     services:
-      # Label used to access the service container
       casper-nctl:
-        # Docker Hub image
         image: makesoftware/casper-nctl:latest
         options: --name casper-nctl
         env:
@@ -17,7 +15,6 @@ jobs:
           MAXIMUM_ROUND_EXPONENT: '14'
           DEPLOY_DELAY: '30sec'
         ports:
-          # Opens RPC, REST and events ports on the host and service container
           - 11101:11101
           - 14101:14101
           - 18101:18101
