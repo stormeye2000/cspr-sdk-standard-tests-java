@@ -9,20 +9,16 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.net.MalformedURLException;
 
 public class GetBlockTest {
-
     protected static CasperService casperServiceNctl;
-
     @BeforeAll
     static void init() throws MalformedURLException {
         casperServiceNctl = CasperService.usingPeer("127.0.0.1",
                 11101);
     }
-
     @Test
     void getLastBlock(){
         final JsonBlockData blockData = casperServiceNctl.getBlock();
-//        assertNotNull(blockData);
-        assertNull(blockData);
+        assertNotNull(blockData);
     }
 
 
