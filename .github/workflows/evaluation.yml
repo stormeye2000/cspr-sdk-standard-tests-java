@@ -19,7 +19,7 @@ jobs:
           - 14101:14101
           - 18101:18101
     steps:
-      - name: Setting Up Integration Tests
+      - name: Starting NCTL docker
         run: |
           echo "Wait for NCTL"
           sleep 10s
@@ -27,7 +27,7 @@ jobs:
           docker cp casper-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users .
           cat chainspec/accounts.toml
 
-      - name: Upload built artifacts
+      - name: Upload NCTL assets to artifacts
         uses: actions/upload-artifact@v3
         with:
           name: nctl-accounts
@@ -36,6 +36,9 @@ jobs:
             users/user-1/public_key.pem
             users/user-1/public_key_pem
             users/user-1/secret_key.pem         
+            users/user-2/public_key.pem
+            users/user-2/public_key_pem
+            users/user-2/secret_key.pem      
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -45,15 +48,18 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
-      - name: Download math result for job 2
+      - name: Download NCTL assets artifact
         uses: actions/download-artifact@v3
         with:
           name: nctl-accounts
-
+        run: |
+          mv chainspec/ src/test/resources/
+          mv users/ src/test/resources/
+          ls -lta src/test/resources/
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Test with Gradle
         run: |
-          ls -ltra
+          ls -ltra          
           ./gradlew clean cucumberCli
