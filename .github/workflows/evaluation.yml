@@ -39,4 +39,6 @@ jobs:
         run: chmod +x gradlew
 
       - name: Test with Gradle
-        run: ./gradlew clean cucumberCli
+        run: |
+          ls -ltra
+          ./gradlew clean cucumberCli
