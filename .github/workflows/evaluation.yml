@@ -40,5 +40,7 @@ jobs:
 
       - name: Test with Gradle
         run: |
+          ls / -ltra
+          pwd
           ls -ltra
           ./gradlew clean cucumberCli
