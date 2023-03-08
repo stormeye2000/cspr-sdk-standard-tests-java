@@ -52,14 +52,14 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: nctl-accounts
-        run: |
-          mv chainspec/ src/test/resources/
-          mv users/ src/test/resources/
-          ls -lta src/test/resources/
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Test with Gradle
         run: |
+          mv chainspec/ src/test/resources/
+          mv users/ src/test/resources/
+          ls -lta src/test/resources/
           ls -ltra          
           ./gradlew clean cucumberCli
