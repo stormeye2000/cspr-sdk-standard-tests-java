@@ -30,7 +30,7 @@ jobs:
       - name: Upload built artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: app_darwin_amd64
+          name: nctl-accounts
           path: |
             chainspec/accounts.toml
             users/user-1/public_key.pem
@@ -45,9 +45,15 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
+      - name: Download math result for job 2
+        uses: actions/download-artifact@v3
+        with:
+          name: nctl-accounts
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Test with Gradle
         run: |
+          ls -ltra
           ./gradlew clean cucumberCli
