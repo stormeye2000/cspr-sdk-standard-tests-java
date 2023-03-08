@@ -18,17 +18,14 @@ jobs:
           - 11101:11101
           - 14101:14101
           - 18101:18101
-        run: |
-          echo "Copy required files over"
-          sleep 5s
-          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec
-          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users
-          cat chainspec/accounts.toml
     steps:
       - name: Setting Up Integration Tests
         run: |
           echo "Wait for NCTL"
           sleep 10s
+          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec
+          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users
+          cat chainspec/accounts.toml
       - name: Checkout code
         uses: actions/checkout@v2
 
