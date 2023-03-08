@@ -23,8 +23,8 @@ jobs:
         run: |
           echo "Wait for NCTL"
           sleep 10s
-          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec
-          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users
+          docker cp casper-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec .
+          docker cp casper-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users .
           cat chainspec/accounts.toml
       - name: Checkout code
         uses: actions/checkout@v2
