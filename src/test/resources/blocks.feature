@@ -1,5 +1,5 @@
 Feature: Blocks Integration Tests
-  Scenario: Test Get Block
+  Scenario: Test Block Methods
 
     Given that the latest block is requested
     Then a valid block is returned
