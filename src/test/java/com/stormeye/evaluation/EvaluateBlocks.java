@@ -6,19 +6,16 @@ import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.identifier.block.HeightBlockIdentifier;
 import com.casper.sdk.model.block.JsonBlockData;
 import com.casper.sdk.model.common.Digest;
-import com.casper.sdk.model.deploy.Deploy;
-import com.casper.sdk.model.transfer.Transfer;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
 
 import java.net.MalformedURLException;
 import io.cucumber.java.BeforeAll;
-import io.cucumber.java.BeforeStep;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 
-public class Blocks {
+public class EvaluateBlocks {
 
     private static JsonBlockData blockData;
     private static final String url = "localhost";
@@ -29,16 +26,6 @@ public class Blocks {
     public static void setUp() throws MalformedURLException {
         casperServiceNctl = CasperService.usingPeer(url, port);
         blockData = null;
-    }
-
-    @Then("block returns required data")
-    public void blockReturnsRequiredData() {
-        assertBlock(blockData);
-    }
-
-    @Given("I have block transfers")
-    public void iHaveBlockTransfers() {
-        final TransferData transferData = casperServiceNctl.getBlockTransfers();
     }
 
     @Given("that the latest block is requested")
@@ -108,15 +95,6 @@ public class Blocks {
 
         final TransferData blockTransfers = casperServiceNctl.getBlockTransfers();
 
-    }
-
-    private void assertBlock(final JsonBlockData block){
-        assertNotNull(block);
-        assertNotNull(block.getBlock());
-        assertNotNull(block.getBlock().getHash());
-        assertNotNull(block.getBlock().getBody());
-        assertNotNull(block.getBlock().getHeader());
-        assertNotNull(block.getBlock().getProofs());
     }
 
     private void doTransfer(){

@@ -14,7 +14,11 @@ dependencies {
             branch = 'main'
         }
     }
+
     implementation group: 'io.cucumber', name: 'cucumber-java', version: '7.11.1'
+//    implementation group: 'io.cucumber', name: 'cucumber-spring', version: '7.11.1'
+//    implementation group: 'io.cucumber', name: 'cucumber-junit', version: '7.11.1'
+
     testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     implementation "dev.oak3:sbs4j:${sbs4jVersion}"
@@ -36,7 +40,8 @@ task cucumberCli() {
                     '--plugin', 'pretty',
                     '--plugin', 'html:target/cucumber-report.html',
                     '--glue', 'com.stormeye.evaluation',
-                    'src/test/resources']
+                    '--glue', 'com.casper.sdk',
+                    'src/test/resources/features']
         }
     }
 }
