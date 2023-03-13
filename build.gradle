@@ -15,9 +15,11 @@ dependencies {
         }
     }
 
-    implementation group: 'io.cucumber', name: 'cucumber-java', version: '7.11.1'
-//    implementation group: 'io.cucumber', name: 'cucumber-spring', version: '7.11.1'
-//    implementation group: 'io.cucumber', name: 'cucumber-junit', version: '7.11.1'
+    implementation "io.cucumber:cucumber-java:${cucumberVersion}"
+
+    implementation "com.syntifi.crypto:crypto-key-ed25519:${cryptokeyVersion}"
+    implementation "com.syntifi.crypto:crypto-key-secp256k1:${cryptokeyVersion}"
+
 
     testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
