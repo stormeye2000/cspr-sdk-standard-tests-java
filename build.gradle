@@ -24,6 +24,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     implementation "dev.oak3:sbs4j:${sbs4jVersion}"
+    testRuntimeOnly files('assets')
 }
 
 configurations {

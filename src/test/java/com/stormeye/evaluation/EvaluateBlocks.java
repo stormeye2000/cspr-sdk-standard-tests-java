@@ -2,6 +2,7 @@ package com.stormeye.evaluation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.casper.sdk.exception.CasperClientException;
 import com.casper.sdk.exception.NoSuchTypeException;
 import com.casper.sdk.helper.CasperTransferHelper;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
@@ -12,21 +13,15 @@ import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployData;
 import com.casper.sdk.model.deploy.DeployResult;
-import com.casper.sdk.model.event.EventTarget;
-import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
-import com.casper.sdk.service.EventConsumer;
 import com.casper.sdk.service.EventService;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
-
-import com.casper.sdk.model.event.Event;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -48,6 +43,16 @@ public class EvaluateBlocks {
     protected static CasperService csprServiceNctl;
 
     protected static EventService eventService;
+
+    private static final String invalidBlockHash = "2fe9630b7790852e4409d815b04ca98f37effcdf9097d317b9b9b8ad658f47c8";
+    private static final long invalidHeight = 9999999999L;
+
+    private static final String blockErrorMsg = "block not known";
+    private static final String blockErrorCode = "-32001";
+
+
+    private static CasperClientException csprClientException;
+
 
     protected String getResourcesKeyPath(String filename) throws URISyntaxException {
         return Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(filename)).toURI()).toString();
@@ -132,13 +137,37 @@ public class EvaluateBlocks {
 
     }
 
+
+    @Given("that an invalid block hash is requested")
+    public void thatAnInvalidBlockHashIsRequested() {
+        csprClientException = assertThrows(CasperClientException.class,
+                () -> csprServiceNctl.getBlock(new HashBlockIdentifier(invalidBlockHash)));
+    }
+
+    @Given("that an invalid block height is requested")
+    public void thatAnInvalidBlockHeightIsRequested() {
+        csprClientException = assertThrows(CasperClientException.class,
+                () -> csprServiceNctl.getBlock(new HeightBlockIdentifier(invalidHeight)));
+    }
+
+
+    @Then("a valid error message is returned")
+    public void aValidErrorMessageIsReturned() {
+        assertNotNull(csprClientException.getMessage());
+
+        assertTrue(csprClientException.getMessage().toLowerCase().contains(blockErrorMsg));
+        assertTrue(csprClientException.getMessage().toLowerCase().contains(blockErrorCode));
+
+    }
+
+
     private DeployResult doTransfer() throws URISyntaxException, IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
 
         Ed25519PrivateKey user1 = new Ed25519PrivateKey();
         Ed25519PrivateKey user2 = new Ed25519PrivateKey();
 
-        user1.readPrivateKey(getResourcesKeyPath("assets/users/user-1/secret_key.pem"));
-        user2.readPrivateKey(getResourcesKeyPath("assets/users/user-2/secret_key.pem"));
+        user1.readPrivateKey(getResourcesKeyPath("net-1/user-1/public_key.pem"));
+        user2.readPrivateKey(getResourcesKeyPath("net-1/user-2/public_key.pem"));
 
         long id = Math.abs(new Random().nextInt());
         Ttl ttl = Ttl
