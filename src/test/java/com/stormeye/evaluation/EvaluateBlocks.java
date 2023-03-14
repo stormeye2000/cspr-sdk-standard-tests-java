@@ -1,7 +1,5 @@
 package com.stormeye.evaluation;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.casper.sdk.exception.NoSuchTypeException;
 import com.casper.sdk.helper.CasperTransferHelper;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
@@ -12,21 +10,20 @@ import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployData;
 import com.casper.sdk.model.deploy.DeployResult;
-import com.casper.sdk.model.event.EventTarget;
-import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
-import com.casper.sdk.service.EventConsumer;
 import com.casper.sdk.service.EventService;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
-
-import com.casper.sdk.model.event.Event;
+import dev.oak3.sbs4j.exception.ValueSerializationException;
+import io.cucumber.java.BeforeAll;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
@@ -34,11 +31,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Random;
-import dev.oak3.sbs4j.exception.ValueSerializationException;
-import io.cucumber.java.BeforeAll;
-import io.cucumber.java.en.And;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class EvaluateBlocks {
 
@@ -137,8 +131,8 @@ public class EvaluateBlocks {
         Ed25519PrivateKey user1 = new Ed25519PrivateKey();
         Ed25519PrivateKey user2 = new Ed25519PrivateKey();
 
-        user1.readPrivateKey(getResourcesKeyPath("assets/users/user-1/secret_key.pem"));
-        user2.readPrivateKey(getResourcesKeyPath("assets/users/user-2/secret_key.pem"));
+        user1.readPrivateKey(getResourcesKeyPath("net-1/user-1/secret_key.pem"));
+        user2.readPrivateKey(getResourcesKeyPath("net-1/user-1/secret_key.pem"));
 
         long id = Math.abs(new Random().nextInt());
         Ttl ttl = Ttl
@@ -160,15 +154,12 @@ public class EvaluateBlocks {
         do {
             DeployData deploy1 = csprServiceNctl.getDeploy(deployResult.getDeployHash());
 
-            if (!deploy1.getExecutionResults().isEmpty()){
+            if (!deploy1.getExecutionResults().isEmpty()) {
                 break;
             }
 
-        } while(true);
+        } while (true);
 
         return deployResult;
-
     }
-
-
 }
