@@ -52,4 +52,9 @@ task cucumberCli() {
 
 test {
     useJUnitPlatform()
+    finalizedBy cucumberCli
 }
+
+
+
+
