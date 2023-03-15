@@ -10,7 +10,6 @@ repositories {
 
 dependencies {
 
-    // TODO WHY BRANCH? BY DOING THIS WE NEED TO HAVE SAME GRADLE VERSION AS SDK
     implementation('network.casper:casper-java-sdk') {
         version {
             branch = 'main'
@@ -54,7 +53,3 @@ test {
     useJUnitPlatform()
     finalizedBy cucumberCli
 }
-
-
-
-
