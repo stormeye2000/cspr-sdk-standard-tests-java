@@ -132,7 +132,7 @@ public class EvaluateBlocks {
         Ed25519PrivateKey user2 = new Ed25519PrivateKey();
 
         user1.readPrivateKey(getResourcesKeyPath("net-1/user-1/secret_key.pem"));
-        user2.readPrivateKey(getResourcesKeyPath("net-1/user-1/secret_key.pem"));
+        user2.readPrivateKey(getResourcesKeyPath("net-1/user-2/secret_key.pem"));
 
         long id = Math.abs(new Random().nextInt());
         Ttl ttl = Ttl
