@@ -9,6 +9,7 @@ repositories {
 }
 
 dependencies {
+
     implementation('network.casper:casper-java-sdk') {
         version {
             branch = 'main'
@@ -16,14 +17,14 @@ dependencies {
     }
 
     implementation "io.cucumber:cucumber-java:${cucumberVersion}"
-
     implementation "com.syntifi.crypto:crypto-key-ed25519:${cryptokeyVersion}"
     implementation "com.syntifi.crypto:crypto-key-secp256k1:${cryptokeyVersion}"
-
+    implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
+    implementation "dev.oak3:sbs4j:${sbs4jVersion}"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
+    testImplementation files('assets')
     testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
-    implementation "dev.oak3:sbs4j:${sbs4jVersion}"
 }
 
 configurations {
@@ -40,7 +41,7 @@ task cucumberCli() {
             classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
             args = [
                     '--plugin', 'pretty',
-                    '--plugin', 'html:target/cucumber-report.html',
+                    '--plugin', 'html:build/reports/tests/cucumber/cucumber-report.html',
                     '--glue', 'com.stormeye.evaluation',
                     '--glue', 'com.casper.sdk',
                     'src/test/resources/features']
@@ -50,4 +51,5 @@ task cucumberCli() {
 
 test {
     useJUnitPlatform()
+    finalizedBy cucumberCli
 }
