@@ -13,7 +13,8 @@ import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
-import com.casper.sdk.service.EventService;
+import com.stormeye.utils.AssetUtils;
+import com.stormeye.utils.CasperClientProvider;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
 import io.cucumber.java.BeforeAll;
@@ -23,13 +24,9 @@ import io.cucumber.java.en.Then;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Objects;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,25 +34,19 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EvaluateBlocks {
 
     private static JsonBlockData blockData;
-    private static final String url = "localhost";
-    private static final Integer port = 11101;
-    protected static CasperService csprServiceNctl;
-
-    protected static EventService eventService;
-
-    protected String getResourcesKeyPath(String filename) throws URISyntaxException {
-        return Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(filename)).toURI()).toString();
-    }
 
     @BeforeAll
-    public static void setUp() throws MalformedURLException {
-        csprServiceNctl = CasperService.usingPeer(url, port);
+    public static void setUp() {
         blockData = null;
     }
 
     @Given("that the latest block is requested")
     public void thatTheLatestBlockIsRequested() {
-        blockData = csprServiceNctl.getBlock();
+        blockData = getCasperService().getBlock();
+    }
+
+    private static CasperService getCasperService() {
+        return CasperClientProvider.getInstance().getCasperService();
     }
 
     @Then("a valid block is returned")
@@ -104,35 +95,35 @@ public class EvaluateBlocks {
 
     @Given("that a block is returned by hash")
     public void thatABlockIsReturnedByHash() {
-        final JsonBlockData latestBlock = csprServiceNctl.getBlock();
+        final JsonBlockData latestBlock = getCasperService().getBlock();
         final String hash = latestBlock.getBlock().getHash().toString();
 
-        blockData = csprServiceNctl.getBlock(new HashBlockIdentifier(hash));
+        blockData = getCasperService().getBlock(new HashBlockIdentifier(hash));
     }
 
     @Given("that a block is returned by height {int}")
     public void thatABlockIsReturnedByHeight(long height) {
-        blockData = csprServiceNctl.getBlock(new HeightBlockIdentifier(height));
+        blockData = getCasperService().getBlock(new HeightBlockIdentifier(height));
     }
 
     @Given("that a transfer block is requested")
-    public void thatATransferBlockIsRequested() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException, URISyntaxException, IOException {
+    public void thatATransferBlockIsRequested() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException, IOException {
 
         DeployResult result = doTransfer();
 
-        DeployData deploy = csprServiceNctl.getDeploy(result.getDeployHash());
+        DeployData deploy = getCasperService().getDeploy(result.getDeployHash());
 
-        final TransferData blockTransfers = csprServiceNctl.getBlockTransfers();
+        final TransferData blockTransfers = getCasperService().getBlockTransfers();
 
     }
 
-    private DeployResult doTransfer() throws URISyntaxException, IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+    private DeployResult doTransfer() throws IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
 
         Ed25519PrivateKey user1 = new Ed25519PrivateKey();
         Ed25519PrivateKey user2 = new Ed25519PrivateKey();
 
-        user1.readPrivateKey(getResourcesKeyPath("net-1/user-1/secret_key.pem"));
-        user2.readPrivateKey(getResourcesKeyPath("net-1/user-2/secret_key.pem"));
+        user1.readPrivateKey(AssetUtils.getUserKeyAsset(1, 1, "secret_key.pem").getFile());
+        user2.readPrivateKey(AssetUtils.getUserKeyAsset(1, 2, "secret_key.pem").getFile());
 
         long id = Math.abs(new Random().nextInt());
         Ttl ttl = Ttl
@@ -148,11 +139,11 @@ public class EvaluateBlocks {
                 new ArrayList<>());
 
 
-        DeployResult deployResult = csprServiceNctl.putDeploy(deploy);
+        DeployResult deployResult = getCasperService().putDeploy(deploy);
 
 
         do {
-            DeployData deploy1 = csprServiceNctl.getDeploy(deployResult.getDeployHash());
+            DeployData deploy1 = getCasperService().getDeploy(deployResult.getDeployHash());
 
             if (!deploy1.getExecutionResults().isEmpty()) {
                 break;
@@ -162,4 +153,5 @@ public class EvaluateBlocks {
 
         return deployResult;
     }
+
 }
