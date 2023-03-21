@@ -21,6 +21,7 @@ import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -45,7 +46,7 @@ public class EvaluateBlocks {
         blockData = getCasperService().getBlock();
     }
 
-    private static CasperService getCasperService() {
+    private static  CasperService getCasperService() {
         return CasperClientProvider.getInstance().getCasperService();
     }
 
@@ -153,5 +154,4 @@ public class EvaluateBlocks {
 
         return deployResult;
     }
-
 }

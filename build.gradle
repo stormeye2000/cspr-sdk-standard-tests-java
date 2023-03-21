@@ -16,16 +16,29 @@ dependencies {
         }
     }
 
-    implementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    //implementation files("libs/casper-java-sdk-${casperSdkVersion}.jar")
+    implementation "dev.oak3:sbs4j:${sbs4jVersion}"
+    implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
+    implementation "com.syntifi.crypto:crypto-key-common:${cryptokeyVersion}"
     implementation "com.syntifi.crypto:crypto-key-ed25519:${cryptokeyVersion}"
     implementation "com.syntifi.crypto:crypto-key-secp256k1:${cryptokeyVersion}"
-    implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
-    implementation "dev.oak3:sbs4j:${sbs4jVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    implementation "org.javatuples:javatuples:${javaTuplesVersion}"
+    implementation "joda-time:joda-time:${jodaTimeVersion}"
 
+    compileOnly "org.slf4j:slf4j-api:${slf4jApiVersion}"
+
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
+
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testImplementation files('assets')
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testImplementation "org.hamcrest:hamcrest:${hamcrestVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-api:${log4jVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-slf4j-impl:${log4jVersion}"
 }
 
 configurations {

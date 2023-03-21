@@ -7,7 +7,6 @@ public class TestProperties {
 
     private final String hostname;
     private final int rcpPort;
-
     private final int restPort;
     private final int ssePort;
 
@@ -44,5 +43,4 @@ public class TestProperties {
         final String property = getProperty(name, null);
         return property != null ? Integer.parseInt(property) : defaultValue;
     }
-
 }
