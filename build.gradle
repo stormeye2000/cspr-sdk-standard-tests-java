@@ -9,22 +9,36 @@ repositories {
 }
 
 dependencies {
+
     implementation('network.casper:casper-java-sdk') {
         version {
             branch = 'main'
         }
     }
 
-    implementation "io.cucumber:cucumber-java:${cucumberVersion}"
-
+    //implementation files("libs/casper-java-sdk-${casperSdkVersion}.jar")
+    implementation "dev.oak3:sbs4j:${sbs4jVersion}"
+    implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
+    implementation "com.syntifi.crypto:crypto-key-common:${cryptokeyVersion}"
     implementation "com.syntifi.crypto:crypto-key-ed25519:${cryptokeyVersion}"
     implementation "com.syntifi.crypto:crypto-key-secp256k1:${cryptokeyVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    implementation "org.javatuples:javatuples:${javaTuplesVersion}"
+    implementation "joda-time:joda-time:${jodaTimeVersion}"
 
+    compileOnly "org.slf4j:slf4j-api:${slf4jApiVersion}"
 
-    testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
-    implementation "dev.oak3:sbs4j:${sbs4jVersion}"
-    testRuntimeOnly files('assets')
+
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
+    testImplementation files('assets')
+    testImplementation "org.hamcrest:hamcrest:${hamcrestVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-api:${log4jVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+    testImplementation "org.apache.logging.log4j:log4j-slf4j-impl:${log4jVersion}"
 }
 
 configurations {
@@ -41,7 +55,7 @@ task cucumberCli() {
             classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
             args = [
                     '--plugin', 'pretty',
-                    '--plugin', 'html:target/cucumber-report.html',
+                    '--plugin', 'html:build/reports/tests/cucumber/cucumber-report.html',
                     '--glue', 'com.stormeye.evaluation',
                     '--glue', 'com.casper.sdk',
                     'src/test/resources/features']
@@ -51,4 +65,5 @@ task cucumberCli() {
 
 test {
     useJUnitPlatform()
+    finalizedBy cucumberCli
 }
