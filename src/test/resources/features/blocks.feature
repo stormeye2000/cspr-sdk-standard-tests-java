@@ -43,6 +43,13 @@ Feature: Blocks Integration Tests
     Then a valid error message is returned
 
 
+    Given that a block at era switch is requested
+    Then a valid block is returned
+    And with a valid hash
+    And with a valid body
+    And with valid headers
+    And with valid proofs
+
 #    Given that a transfer block is requested
 #    Then a valid block is returned
 #    And with a valid hash

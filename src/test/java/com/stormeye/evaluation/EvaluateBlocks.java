@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.casper.sdk.exception.CasperClientException;
 import com.casper.sdk.exception.NoSuchTypeException;
 import com.casper.sdk.helper.CasperTransferHelper;
+import com.casper.sdk.identifier.block.BlockIdentifier;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.identifier.block.HeightBlockIdentifier;
 import com.casper.sdk.model.block.JsonBlockData;
@@ -13,6 +14,7 @@ import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployData;
 import com.casper.sdk.model.deploy.DeployResult;
+import com.casper.sdk.model.era.EraInfoData;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
@@ -49,14 +51,7 @@ public class EvaluateBlocks {
 
     private static final String blockErrorMsg = "block not known";
     private static final String blockErrorCode = "-32001";
-
-
     private static CasperClientException csprClientException;
-
-
-    protected String getResourcesKeyPath(String filename) throws URISyntaxException {
-        return Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(filename)).toURI()).toString();
-    }
 
     @BeforeAll
     public static void setUp() throws MalformedURLException {
@@ -90,12 +85,15 @@ public class EvaluateBlocks {
 
     @And("with valid headers")
     public void withValidHeaders() {
+        final Date date = new Date();
+
         assertNotNull(blockData.getBlock().getHeader());
 
         assertNotNull(blockData.getBlock().getHeader().getStateRootHash());
         assertNotNull(blockData.getBlock().getHeader().getBodyHash());
         assertNotNull(blockData.getBlock().getHeader().getParentHash());
         assertNotNull(blockData.getBlock().getHeader().getAccumulatedSeed());
+        assertTrue(date.after(blockData.getBlock().getHeader().getTimeStamp()));
         assertNotNull(blockData.getBlock().getHeader().getTimeStamp());
         assertNotNull(blockData.getBlock().getHeader().getProtocolVersion());
 
@@ -126,17 +124,6 @@ public class EvaluateBlocks {
         blockData = csprServiceNctl.getBlock(new HeightBlockIdentifier(height));
     }
 
-    @Given("that a transfer block is requested")
-    public void thatATransferBlockIsRequested() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException, URISyntaxException, IOException {
-
-        DeployResult result = doTransfer();
-
-        DeployData deploy = csprServiceNctl.getDeploy(result.getDeployHash());
-
-        final TransferData blockTransfers = csprServiceNctl.getBlockTransfers();
-
-    }
-
 
     @Given("that an invalid block hash is requested")
     public void thatAnInvalidBlockHashIsRequested() {
@@ -160,39 +147,58 @@ public class EvaluateBlocks {
 
     }
 
+    @Given("that a transfer block is requested")
+    public void thatATransferBlockIsRequested() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException, IOException {
 
-    private DeployResult doTransfer() throws URISyntaxException, IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+        final DeployResult result = doTransfer();
 
-        Ed25519PrivateKey user1 = new Ed25519PrivateKey();
-        Ed25519PrivateKey user2 = new Ed25519PrivateKey();
+        final DeployData deploy = csprServiceNctl.getDeploy(result.getDeployHash());
 
-        user1.readPrivateKey(getResourcesKeyPath("net-1/user-1/public_key.pem"));
-        user2.readPrivateKey(getResourcesKeyPath("net-1/user-2/public_key.pem"));
+        final TransferData blockTransfers = csprServiceNctl.getBlockTransfers(new HashBlockIdentifier(deploy.getExecutionResults().get(0).getBlockHash()));
+
+
+    }
+
+    @Given("that a block at era switch is requested")
+    public void thatABlockAtEraSwitchIsRequested() {
+
+        JsonBlockData block = csprServiceNctl.getBlock();
+
+        while (block.getBlock().getHeader().getEraEnd() == null) {
+            block = csprServiceNctl.getBlock(new HashBlockIdentifier(block.getBlock().getHeader().getParentHash().toString()));
+        }
+
+        EraInfoData eraInfoBySwitchBlock = csprServiceNctl.getEraInfoBySwitchBlock(new HashBlockIdentifier(block.getBlock().getHash().toString()));
+
+
+    }
+
+
+    private DeployResult doTransfer() throws IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+
+        final Ed25519PrivateKey user1 = new Ed25519PrivateKey();
+        final Ed25519PrivateKey user2 = new Ed25519PrivateKey();
+
+        user1.readPrivateKey("assets/net-1/user-1/secret_key.pem");
+        user2.readPrivateKey("assets/net-1/user-2/secret_key.pem");
 
         long id = Math.abs(new Random().nextInt());
-        Ttl ttl = Ttl
+        final Ttl ttl = Ttl
                 .builder()
                 .ttl("30m")
                 .build();
-        Ed25519PrivateKey from = user1;
-        PublicKey to = PublicKey.fromAbstractPublicKey(user2.derivePublicKey());
 
-        Deploy deploy = CasperTransferHelper.buildTransferDeploy(from, to,
+        final Deploy deploy = CasperTransferHelper.buildTransferDeploy(user1, PublicKey.fromAbstractPublicKey(user2.derivePublicKey()),
                 BigInteger.valueOf(2500000000L), "casper-net-1",
                 id, BigInteger.valueOf(100000000L), 1L, ttl, new Date(),
                 new ArrayList<>());
 
-
-        DeployResult deployResult = csprServiceNctl.putDeploy(deploy);
-
+        final DeployResult deployResult = csprServiceNctl.putDeploy(deploy);
 
         do {
-            DeployData deploy1 = csprServiceNctl.getDeploy(deployResult.getDeployHash());
-
-            if (!deploy1.getExecutionResults().isEmpty()){
+            if (!csprServiceNctl.getDeploy(deployResult.getDeployHash()).getExecutionResults().isEmpty()){
                 break;
             }
-
         } while(true);
 
         return deployResult;
