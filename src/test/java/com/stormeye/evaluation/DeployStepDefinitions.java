@@ -3,15 +3,14 @@ package com.stormeye.evaluation;
 import com.casper.sdk.helper.CasperTransferHelper;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.model.block.JsonBlockData;
+import com.casper.sdk.model.common.Digest;
 import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.event.DataType;
-import com.casper.sdk.model.event.EventTarget;
+import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
-import com.casper.sdk.model.event.deployaccepted.DeployAccepted;
-import com.casper.sdk.model.event.finalitysignature.FinalitySignature;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.utils.AssetUtils;
@@ -25,6 +24,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.hamcrest.CustomMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,73 +48,21 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class DeployStepDefinitions {
 
-    private static final ParameterMap parameterMap = new ParameterMap();
-
+    private static final ParameterMap parameterMap = ParameterMap.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(DeployStepDefinitions.class);
-    private static Thread deploysThread;
-    private static Thread mainThread;
-    private static Thread sigsThread;
+    private static EventHandler eventHandler;
 
     @BeforeAll
     public static void setUp() throws InterruptedException {
         parameterMap.clear();
-
-        (deploysThread = new Thread(() -> {
-            CasperClientProvider.getInstance().getEventService().consumeEvents(EventType.DEPLOYS, EventTarget.POJO, null, event -> {
-                logger.info("Got deploy event {}", event);
-
-                if (event.getDataType() == DataType.DEPLOY_ACCEPTED) {
-                    DeployAccepted deployAccepted = (DeployAccepted) event.getData();
-                    logger.info("Deploy accepted hash: {}", deployAccepted.getDeploy().getHash().toString());
-                }
-            });
-        })).start();
-
-        (mainThread = new Thread(() -> {
-            CasperClientProvider.getInstance().getEventService().consumeEvents(EventType.MAIN, EventTarget.POJO, null, event -> {
-                logger.info("Got main event {}", event);
-                if (event.getDataType() == DataType.BLOCK_ADDED) {
-                    final BlockAdded blockAdded = (BlockAdded) event.getData();
-                    parameterMap.put("lastBlockAdded", blockAdded);
-
-                    final String deployHashes = blockAdded.getBlock().getBody().getDeployHashes()
-                            .stream()
-                            .map(Object::toString)
-                            .collect(Collectors.joining(", "));
-
-                    final String transferHashes = blockAdded.getBlock().getBody().getTransferHashes()
-                            .stream()
-                            .map(Object::toString)
-                            .collect(Collectors.joining(", "));
-
-                    logger.info("Block added deploy hashes: [{}], transfer hashes: [{}]", deployHashes, transferHashes);
-                }
-
-            });
-        })).start();
-
-        (sigsThread = new Thread(() -> {
-            CasperClientProvider.getInstance().getEventService().consumeEvents(EventType.SIGS, EventTarget.POJO, null, event -> {
-                logger.info("Got signature event {}", event);
-
-                if (event.getDataType() == DataType.FINALITY_SIGNATURE) {
-                    FinalitySignature finalitySignature = (FinalitySignature) event.getData();
-                    logger.info("Signature block hash {}", finalitySignature.getBlockHash());
-                }
-            });
-        })).start();
-
-        Thread.sleep(1000L);
+        eventHandler = new EventHandler();
     }
 
-
+    @SuppressWarnings("unused")
     @AfterAll
-    static void afterAll() {
-        deploysThread.stop();
-        mainThread.stop();
-        sigsThread.stop();
+    void tearDown() {
+        eventHandler.close();
     }
-
 
     @Given("that user-{int} initiates a transfer to user-{int}")
     public void thatUserCreatesATransferOfToUser(int senderId, int receiverId) throws IOException {
@@ -180,7 +128,7 @@ public class DeployStepDefinitions {
 
 
     @Then("the deploy response contains a valid deploy hash of length {int} and an API version {string}")
-    public void theValidDeployHashIsReturned(final int hashLength, final String apiVersion) throws Exception {
+    public void theValidDeployHashIsReturned(final int hashLength, final String apiVersion) {
 
         logger.info("Then the deploy response contains a valid deploy hash of length {} and an API version {}", hashLength, apiVersion);
 
@@ -195,21 +143,63 @@ public class DeployStepDefinitions {
 
 
     @Then("wait for a block added event with a timout of {long} seconds")
-    public void waitForABlockAddedEventWithATimoutOfSeconds(long timeout) throws InterruptedException {
+    public void waitForABlockAddedEventWithATimoutOfSeconds(long timeout) throws Exception {
 
         logger.info("Then wait for a block added event with a timout of {} seconds", timeout);
 
-        // TODO use semaphores
-        Thread.sleep(timeout * 1000L);
+        final DeployResult deployResult = parameterMap.get("deployResult");
 
-        DeployResult deployResult = parameterMap.get("deployResult");
-        final BlockAdded lastBlockAdded = parameterMap.get("lastBlockAdded");
-        assertThat(lastBlockAdded, is(notNullValue()));
+        final ExpiringMatcher<Event<BlockAdded>> matcher = new ExpiringMatcher<>(
+                new CustomMatcher<Event<BlockAdded>>("transferHashes contains deployHash") {
+                    @Override
+                    public boolean matches(Object actual) {
+                        if (actual instanceof Event && ((Event<?>) actual).getDataType() == DataType.BLOCK_ADDED) {
+                            //noinspection unchecked
+                            final Event<BlockAdded> event = (Event<BlockAdded>) actual;
+                            if (event.getDataType() == DataType.BLOCK_ADDED) {
+                                final BlockAdded blockAdded = event.getData();
 
-        JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(lastBlockAdded.getBlockHash().toString()));
+                                if (!blockAdded.getBlock().getBody().getTransferHashes().isEmpty()) {
+                                    logger.info("YEAH!!!!!!!");
+                                }
+
+                                final String deployHashes = blockAdded.getBlock().getBody().getDeployHashes()
+                                        .stream()
+                                        .map(Object::toString)
+                                        .collect(Collectors.joining(", "));
+
+                                final String transferHashes = blockAdded.getBlock().getBody().getTransferHashes()
+                                        .stream()
+                                        .map(Object::toString)
+                                        .collect(Collectors.joining(", "));
+
+                                logger.info("Block added deploy hashes: [{}], transfer hashes: [{}]", deployHashes, transferHashes);
+
+
+                                if (transferHashes.contains(deployResult.getDeployHash())) {
+                                    logger.info("We have a match");
+                                    parameterMap.put("matchingBlockHash", blockAdded.getBlock().getHash());
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                },
+                timeout
+        );
+
+        eventHandler.addEventMatcher(EventType.MAIN, matcher);
+
+        assertThat(matcher.waitForMatch(), is(true));
+
+        final Digest matchingBlockHash = parameterMap.get("matchingBlockHash");
+        assertThat(matchingBlockHash, is(notNullValue()));
+
+        final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
         assertThat(block, is(notNullValue()));
-        List<String> deployHashes = block.getBlock().getBody().getDeployHashes();
-        assertThat(deployHashes, hasItem(deployResult.getDeployHash()));
+        List<String> transferHashes = block.getBlock().getBody().getTransferHashes();
+        assertThat(transferHashes, hasItem(deployResult.getDeployHash()));
     }
 }
 

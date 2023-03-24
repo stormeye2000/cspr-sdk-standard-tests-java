@@ -17,7 +17,7 @@ public class CasperClientProvider {
     private final CasperService casperService;
     private final EventService eventService;
 
-    public static CasperClientProvider getInstance() {
+    public static synchronized CasperClientProvider getInstance() {
         if (instance == null) {
             instance = new CasperClientProvider();
         }

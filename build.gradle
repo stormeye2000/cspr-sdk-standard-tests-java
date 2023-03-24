@@ -10,13 +10,13 @@ repositories {
 
 dependencies {
 
-    implementation('network.casper:casper-java-sdk') {
+    /*implementation('network.casper:casper-java-sdk') {
         version {
             branch = 'main'
         }
-    }
+    }*/
 
-    //implementation files("libs/casper-java-sdk-${casperSdkVersion}.jar")
+    implementation files("libs/casper-java-sdk-${casperSdkVersion}.jar")
     implementation "dev.oak3:sbs4j:${sbs4jVersion}"
     implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
     implementation "com.syntifi.crypto:crypto-key-common:${cryptokeyVersion}"
@@ -27,6 +27,8 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     implementation "org.javatuples:javatuples:${javaTuplesVersion}"
     implementation "joda-time:joda-time:${jodaTimeVersion}"
+    implementation "org.apache.cxf:cxf-rt-rs-client:${cxfRtRsSseVersion}"
+    implementation "org.apache.cxf:cxf-rt-rs-sse:${cxfRtRsSseVersion}"
 
     compileOnly "org.slf4j:slf4j-api:${slf4jApiVersion}"
 
@@ -50,7 +52,7 @@ configurations {
 task cucumberCli() {
     dependsOn assemble, testClasses
     doLast {
-        javaexec {
+            javaexec {
             main = "io.cucumber.core.cli.Main"
             classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
             args = [
