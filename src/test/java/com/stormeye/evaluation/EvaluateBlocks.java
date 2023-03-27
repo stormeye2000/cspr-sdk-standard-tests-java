@@ -1,6 +1,8 @@
 package com.stormeye.evaluation;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.core.Is.is;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
