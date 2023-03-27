@@ -49,15 +49,14 @@ public class EventHandler {
                 CasperClientProvider.getInstance().getEventService().consumeEvents(eventType, EventTarget.POJO, null, event -> {
                     logger.info("Got {} event {}", eventType, event);
                     handleMatchers(event);
-                }, throwable -> {
-                    logger.error("Error processing SSE event", throwable);
-                })
+                }, throwable -> logger.error("Error processing SSE event", throwable))
         );
     }
 
 
-    public void addEventMatcher(final EventType eventType, ExpiringMatcher<?> matcher) {
+    public <T> ExpiringMatcher<T>  addEventMatcher(final EventType eventType, ExpiringMatcher<T> matcher) {
         matcherMap.addEventMatcher(eventType, matcher);
+        return matcher;
     }
 
     private void handleMatchers(Event<?> event) {

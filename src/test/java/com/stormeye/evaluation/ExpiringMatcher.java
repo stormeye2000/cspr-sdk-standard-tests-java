@@ -4,9 +4,9 @@ import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A matcher that expires if a match has not occurred within a given time in seconds.
@@ -18,35 +18,32 @@ public class ExpiringMatcher<T> {
     private final Logger logger = LoggerFactory.getLogger(ExpiringMatcher.class);
 
     /** The matcher to use against the result */
-    private final Matcher matcher;
-    /** The time in seconds that the matcher must be invoked before timing out */
-    private final long timeoutSeconds;
-
+    private final Matcher<T> matcher;
     private final Semaphore semaphore;
-
-    private final Timer timer;
-
     private boolean passed = false;
     private Exception error;
 
-    public ExpiringMatcher(final Matcher<T> matcher, final long timeoutSeconds) {
+    public ExpiringMatcher(final Matcher<T> matcher) {
         this.matcher = matcher;
-        this.timeoutSeconds = timeoutSeconds;
         this.semaphore = new Semaphore(1);
 
-        acquireSemaphore();
+        AtomicInteger counter = new AtomicInteger(0);
 
-        timer = new Timer();
+        // Acquire the semaphore in new thread to lock it
+        new Thread(() -> {
+            acquireSemaphore();
+            counter.incrementAndGet();
 
-        timer.schedule(
-                new TimerTask() {
-                    @Override
-                    public void run() {
-                        semaphore.release();
-                    }
-                },
-                timeoutSeconds * 1000L
-        );
+        }).start();
+
+        do {
+            try {
+                //noinspection BusyWait
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        } while (counter.get() == 0);
     }
 
 
@@ -54,24 +51,20 @@ public class ExpiringMatcher<T> {
         try {
             if (matcher.matches(actual)) {
                 passed = true;
-                timer.cancel();
                 semaphore.release();
             }
-        } catch (Exception e) {
-            logger.error("Error in ExpiringMatcher",e);
+        } catch (final Exception e) {
+            logger.error("Error in ExpiringMatcher", e);
             this.error = e;
-            timer.cancel();
             semaphore.release();
             throw new RuntimeException(e);
         }
     }
 
-    public long getTimeoutSeconds() {
-        return timeoutSeconds;
-    }
+    public boolean waitForMatch(final long timeoutSeconds) throws Exception {
 
-    public boolean waitForMatch() throws Exception{
-        acquireSemaphore();
+        //noinspection ResultOfMethodCallIgnored
+        semaphore.tryAcquire(timeoutSeconds, TimeUnit.SECONDS);
 
         if (error != null) {
             throw error;
@@ -85,9 +78,5 @@ public class ExpiringMatcher<T> {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private Throwable getError() {
-        return this.error;
     }
 }

@@ -7,7 +7,6 @@ import com.casper.sdk.model.common.Digest;
 import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployResult;
-import com.casper.sdk.model.event.DataType;
 import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
@@ -24,7 +23,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.hamcrest.CustomMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +32,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
+import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsIterableContaining.hasItem;
@@ -149,51 +147,17 @@ public class DeployStepDefinitions {
 
         final DeployResult deployResult = parameterMap.get("deployResult");
 
-        final ExpiringMatcher<Event<BlockAdded>> matcher = new ExpiringMatcher<>(
-                new CustomMatcher<Event<BlockAdded>>("transferHashes contains deployHash") {
-                    @Override
-                    public boolean matches(Object actual) {
-                        if (actual instanceof Event && ((Event<?>) actual).getDataType() == DataType.BLOCK_ADDED) {
-                            //noinspection unchecked
-                            final Event<BlockAdded> event = (Event<BlockAdded>) actual;
-                            if (event.getDataType() == DataType.BLOCK_ADDED) {
-                                final BlockAdded blockAdded = event.getData();
-
-                                if (!blockAdded.getBlock().getBody().getTransferHashes().isEmpty()) {
-                                    logger.info("YEAH!!!!!!!");
-                                }
-
-                                final String deployHashes = blockAdded.getBlock().getBody().getDeployHashes()
-                                        .stream()
-                                        .map(Object::toString)
-                                        .collect(Collectors.joining(", "));
-
-                                final String transferHashes = blockAdded.getBlock().getBody().getTransferHashes()
-                                        .stream()
-                                        .map(Object::toString)
-                                        .collect(Collectors.joining(", "));
-
-                                logger.info("Block added deploy hashes: [{}], transfer hashes: [{}]", deployHashes, transferHashes);
-
-
-                                if (transferHashes.contains(deployResult.getDeployHash())) {
-                                    logger.info("We have a match");
-                                    parameterMap.put("matchingBlockHash", blockAdded.getBlock().getHash());
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    }
-                },
-                timeout
+        final ExpiringMatcher<Event<BlockAdded>> matcher = eventHandler.addEventMatcher(
+                EventType.MAIN,
+                hasTransferHashWithin(
+                        deployResult.getDeployHash(),
+                        blockAddedEvent -> parameterMap.put("matchingBlock", blockAddedEvent.getData())
+                )
         );
 
-        eventHandler.addEventMatcher(EventType.MAIN, matcher);
+        assertThat(matcher.waitForMatch(timeout), is(true));
 
-        assertThat(matcher.waitForMatch(), is(true));
-
-        final Digest matchingBlockHash = parameterMap.get("matchingBlockHash");
+        final Digest matchingBlockHash = ((BlockAdded)parameterMap.get("matchingBlock")).getBlockHash();
         assertThat(matchingBlockHash, is(notNullValue()));
 
         final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
