@@ -42,13 +42,16 @@ Feature: Blocks Integration Tests
     Given that an invalid block height is requested
     Then a valid error message is returned
 
-    Given that a block at era switch is requested
-    Then valid era switch data is returned
-    And with a valid era switch block hash
-    And with a valid state root hash
-    And with a valid era id
-    And with a valid merkle proof
-    And with a valid stored value
+    Given that a NCTL era switch block is requested
+    Then request the corresponding era switch block
+    And the switch block hashes are equal
+    And the switch block eras are equal
+    And the switch block merkle proofs are equal
+    And the switch block state root hashes are equal
+    And the delegator list counts are equal
+    And the delegator public keys are equal
+    And the delegator amounts are equal
+
 
 #    Given that a transfer block is requested
 #    Then a valid block is returned
@@ -57,7 +60,5 @@ Feature: Blocks Integration Tests
 #    And with valid headers
 #    And with valid proofs
 
-#    Given I have the block at era switch
-#    Then block returns required data
 
 

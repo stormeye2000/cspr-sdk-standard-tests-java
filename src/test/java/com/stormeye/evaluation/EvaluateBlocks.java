@@ -2,6 +2,8 @@ package com.stormeye.evaluation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.casper.sdk.exception.CasperClientException;
 import com.casper.sdk.exception.NoSuchTypeException;
 import com.casper.sdk.helper.CasperTransferHelper;
@@ -10,16 +12,17 @@ import com.casper.sdk.identifier.block.HeightBlockIdentifier;
 import com.casper.sdk.model.block.JsonBlockData;
 import com.casper.sdk.model.common.Digest;
 import com.casper.sdk.model.common.Ttl;
-import com.casper.sdk.model.deploy.Deploy;
-import com.casper.sdk.model.deploy.DeployData;
-import com.casper.sdk.model.deploy.DeployResult;
+import com.casper.sdk.model.deploy.*;
 import com.casper.sdk.model.era.EraInfoData;
 import com.casper.sdk.model.key.PublicKey;
+import com.casper.sdk.model.storedvalue.StoredValueEraInfo;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
-import com.stormeye.utils.AssetUtils;
-import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ParameterMap;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stormeye.utils.*;
+import com.syntifi.crypto.key.AbstractPublicKey;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
 import io.cucumber.java.BeforeAll;
@@ -30,9 +33,12 @@ import io.cucumber.java.en.Then;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 
 public class EvaluateBlocks {
@@ -43,6 +49,12 @@ public class EvaluateBlocks {
     private static final String blockErrorCode = "-32001";
     private static CasperClientException csprClientException;
     private static final ParameterMap parameterMap = new ParameterMap();
+
+    private final ExecUtils execUtils = new ExecUtils();
+    private final ObjectMapper mapper = new ObjectMapper();
+
+
+    private static final Logger logger = LoggerFactory.getLogger(EvaluateBlocks.class);
 
     @BeforeAll
     public static void setUp() {
@@ -70,7 +82,7 @@ public class EvaluateBlocks {
     public void withAValidHash() {
         final JsonBlockData blockData = parameterMap.get("blockData");
 
-        validBlockHash(blockData.getBlock().getHash());
+        validateBlockHash(blockData.getBlock().getHash());
 
     }
 
@@ -157,20 +169,6 @@ public class EvaluateBlocks {
 
     }
 
-    @Given("that a block at era switch is requested")
-    public void thatABlockAtEraSwitchIsRequested() {
-
-        JsonBlockData block = getCasperService().getBlock();
-
-        while (block.getBlock().getHeader().getEraEnd() == null) {
-            block = getCasperService().getBlock(new HashBlockIdentifier(block.getBlock().getHeader().getParentHash().toString()));
-        }
-
-        parameterMap.put("eraChangeBlockData", getCasperService().getBlock(new HashBlockIdentifier(block.getBlock().getHeader().getParentHash().toString())));
-        parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(block.getBlock().getHash().toString())));
-
-    }
-
     @Then("valid era switch data is returned")
     public void validEraSwitchDataIsReturned() {
 
@@ -180,46 +178,130 @@ public class EvaluateBlocks {
 
     }
 
-    @And("with a valid era switch block hash")
-    public void withAValidEraSwitchBlockHash() {
+    @Given("that a NCTL era switch block is requested")
+    public void thatANCTLEraSwitchBlockIsRequested() {
 
-        final EraInfoData eraInfoData = parameterMap.get("eraSwitchBlockData");
-        validBlockHash(new Digest(eraInfoData.getEraSummary().getBlockHash()));
+        //Query NCTL to get the next era switch info
+        JsonNode result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand());
+        while (!result.hasNonNull("era_summary")){
+            result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand());
+        }
+        assertNotNull(result.get("era_summary").get("block_hash").textValue());
+        validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
 
-        //Assert block exists
-        assertNotNull(getCasperService().getBlock(new HashBlockIdentifier(eraInfoData.getEraSummary().getBlockHash())));
+        parameterMap.put("nctlEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
+        parameterMap.put("nctlEraSwitchData", result);
 
     }
 
-    @And("with a valid era id")
-    public void withAValidEraId() {
-        final EraInfoData eraInfoData = parameterMap.get("eraSwitchBlockData");
-        assertNotNull(eraInfoData.getEraSummary().getEraId());
-        assertTrue(eraInfoData.getEraSummary().getEraId() > 0);
+    @Then("request the corresponding era switch block")
+    public void requestTheCorrespondingEraSwitchBlock() {
+
+        parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(parameterMap.get("nctlEraSwitchBlock"))));
+
     }
 
-    @And("with a valid merkle proof")
-    public void withAValidMerkleProof() {
-        final EraInfoData eraInfoData = parameterMap.get("eraSwitchBlockData");
-        assertNotNull(eraInfoData.getEraSummary().getMerkleProof());
+    @And("the switch block hashes are equal")
+    public void theSwitchBlockHashesAreEqual() {
+        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+
+        assertEquals(parameterMap.get("nctlEraSwitchBlock"), data.getEraSummary().getBlockHash());
+
+    }
+
+    @And("the switch block eras are equal")
+    public void theSwitchBlockErasAreEqual() throws JsonProcessingException {
+        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+
+        assertEquals(node.get("era_summary").get("era_id").toString(), data.getEraSummary().getEraId().toString());
+    }
+
+    @And("the switch block merkle proofs are equal")
+    public void theSwitchBlockMerkleProofsAreEqual() throws JsonProcessingException {
+
+        //The merkle proof returned from NCTL is abbreviated eg [10634 hex chars]
+        //We can compare string lengths
+        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+
+        final String merkleCharCount = node.get("era_summary").get("merkle_proof").asText().replaceAll("\\D+","");
+        assertEquals(Integer.valueOf(merkleCharCount), data.getEraSummary().getMerkleProof().length());
+
+        final Digest digest = new Digest(data.getEraSummary().getMerkleProof());
+        assertTrue(digest.isValid());
+
+    }
+
+    @And("the switch block state root hashes are equal")
+    public void theSwitchBlockStateRootHashesAreEqual() throws JsonProcessingException {
+
+        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+
+        assertEquals(node.get("era_summary").get("state_root_hash").asText(), data.getEraSummary().getStateRootHash());
+
+    }
+
+    @And("the delegator list counts are equal")
+    public void theDelegatorListCountsAreEqual() throws JsonProcessingException {
+        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final StoredValueEraInfo info = data.getEraSummary().getStoredValue();
+        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+
+        final JsonNode allocations = node.get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
+
+        assertEquals(allocations.size(), info.getValue().getSeigniorageAllocations().size());
+
+    }
+
+    @And("the delegator public keys are equal")
+    public void theDelegatorPublicKeysAreEqual() throws JsonProcessingException {
+        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final StoredValueEraInfo info = data.getEraSummary().getStoredValue();
+        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+
+        final JsonNode allocations = node.get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
+        final List<JsonNode> delegatorsNctl = allocations.findValues("Delegator");
+
+        final List<Delegator> delegatorsSdk = info.getValue().getSeigniorageAllocations()
+                                                                .stream()
+                                                                .filter(q -> q instanceof Delegator)
+                                                                .map (d -> (Delegator) d)
+                                                                .collect(Collectors.toList());
+        delegatorsNctl.forEach(
+                d -> {
+                    final List<Delegator> found = delegatorsSdk
+                            .stream()
+                            .filter(q -> getPublicKey(d.get("delegator_public_key").asText()).equals(q.getDelegatorPublicKey()))
+                            .collect(Collectors.toList());
+
+                    assertThat(found.isEmpty(), is(false));
+
+                }
+        );
+
     }
 
 
-    @And("with a valid stored value")
-    public void withAValidStoredValue() {
+
+    private PublicKey getPublicKey(final String key){
+        try {
+            final PublicKey publicKey = new PublicKey();
+            publicKey.createPublicKey(key);
+            return publicKey;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    @And("with a valid state root hash")
-    public void withAValidStateRootHash() {
-        final EraInfoData eraInfoData = parameterMap.get("eraSwitchBlockData");
-        validBlockHash(new Digest(eraInfoData.getEraSummary().getStateRootHash()));
+    @And("the delegator amounts are equal")
+    public void theDelegatorAmountsAreEqual() {
 
-        //Assert state root block exists
-//        assertNotNull(getCasperService().getBlock(new HashBlockIdentifier(eraInfoData.getEraSummary().getStateRootHash())));
     }
 
 
-    private void validBlockHash(final Digest hash){
+    private void validateBlockHash(final Digest hash){
         assertNotNull(hash);
         assertNotNull(hash.getDigest());
         assertEquals(hash.getClass(), Digest.class);
