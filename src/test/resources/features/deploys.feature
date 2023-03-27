@@ -7,4 +7,4 @@ Feature: Deploys
     And the deploy has a ttl of 30m
     When the deploy is put on chain "casper-net-1"
     Then the deploy response contains a valid deploy hash of length 64 and an API version "1.0.0"
-    Then wait for a block added event with a timout of 650 seconds
+    Then wait for a block added event with a timout of 300 seconds

@@ -12,6 +12,19 @@ public final class ParameterMap {
 
     private final Map<String, Object> map = new LinkedHashMap<>();
 
+    private static ParameterMap instance;
+
+    public static synchronized ParameterMap getInstance() {
+        if (instance == null) {
+            instance = new ParameterMap();
+        }
+        return instance;
+    }
+
+    private ParameterMap() {
+        // Not allowed outside this class
+    }
+
     public <V> void put(final String key, V value) {
         map.put(key, value);
     }
