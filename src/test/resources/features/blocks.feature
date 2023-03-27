@@ -42,13 +42,13 @@ Feature: Blocks Integration Tests
     Given that an invalid block height is requested
     Then a valid error message is returned
 
-
     Given that a block at era switch is requested
-    Then a valid block is returned
-    And with a valid hash
-    And with a valid body
-    And with valid headers
-    And with valid proofs
+    Then valid era switch data is returned
+    And with a valid era switch block hash
+    And with a valid state root hash
+    And with a valid era id
+    And with a valid merkle proof
+    And with a valid stored value
 
 #    Given that a transfer block is requested
 #    Then a valid block is returned
