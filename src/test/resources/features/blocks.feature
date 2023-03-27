@@ -48,9 +48,8 @@ Feature: Blocks Integration Tests
     And the switch block eras are equal
     And the switch block merkle proofs are equal
     And the switch block state root hashes are equal
-    And the delegator list counts are equal
-    And the delegator public keys are equal
-    And the delegator amounts are equal
+    And the delegator data is equal
+    And the validator data is equal
 
 
 #    Given that a transfer block is requested
