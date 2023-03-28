@@ -1,14 +1,17 @@
-package com.stormeye.evaluation;
+package com.stormeye.event;
 
 import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.EventTarget;
 import com.casper.sdk.model.event.EventType;
+import com.stormeye.matcher.MatcherMap;
 import com.stormeye.utils.CasperClientProvider;
+import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * @author ian@meywood.com
@@ -54,12 +57,18 @@ public class EventHandler {
     }
 
 
-    public <T> ExpiringMatcher<T>  addEventMatcher(final EventType eventType, ExpiringMatcher<T> matcher) {
+    public <T> Matcher<T> addEventMatcher(final EventType eventType, Matcher<T> matcher) {
         matcherMap.addEventMatcher(eventType, matcher);
         return matcher;
     }
 
     private void handleMatchers(Event<?> event) {
         matcherMap.handleEvent(event);
+    }
+
+    public <T> void removeEventMatcher(final EventType eventType, Matcher<T> matcher) {
+        matcherMap.removeEventMatcher(eventType, matcher);
+
+
     }
 }

@@ -10,8 +10,12 @@ import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
+import com.casper.sdk.model.event.deployaccepted.DeployAccepted;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.service.CasperService;
+import com.stormeye.event.EventHandler;
+import com.stormeye.matcher.DeployMatchers;
+import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ParameterMap;
@@ -147,7 +151,7 @@ public class DeployStepDefinitions {
 
         final DeployResult deployResult = parameterMap.get("deployResult");
 
-        final ExpiringMatcher<Event<BlockAdded>> matcher = eventHandler.addEventMatcher(
+        final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) eventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
                         deployResult.getDeployHash(),
@@ -157,13 +161,35 @@ public class DeployStepDefinitions {
 
         assertThat(matcher.waitForMatch(timeout), is(true));
 
-        final Digest matchingBlockHash = ((BlockAdded)parameterMap.get("matchingBlock")).getBlockHash();
+        eventHandler.removeEventMatcher(EventType.MAIN, matcher);
+
+        final Digest matchingBlockHash = ((BlockAdded) parameterMap.get("matchingBlock")).getBlockHash();
         assertThat(matchingBlockHash, is(notNullValue()));
 
         final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
         assertThat(block, is(notNullValue()));
         List<String> transferHashes = block.getBlock().getBody().getTransferHashes();
         assertThat(transferHashes, hasItem(deployResult.getDeployHash()));
+    }
+
+    @And("the Deploy is accepted")
+    public void theDeployIsAccepted() throws Exception {
+
+        final DeployResult deployResult = parameterMap.get("deployResult");
+        logger.info("the Deploy {} is accepted", deployResult.getDeployHash());
+
+
+        final ExpiringMatcher<Event<DeployAccepted>> matcher = (ExpiringMatcher<Event<DeployAccepted>>) eventHandler.addEventMatcher(
+                EventType.DEPLOYS,
+                DeployMatchers.theDeployIsAccepted(
+                        deployResult.getDeployHash(),
+                        event -> parameterMap.put("deployAccepted", event.getData())
+                )
+        );
+
+        assertThat(matcher.waitForMatch(5000L), is(true));
+
+        eventHandler.removeEventMatcher(EventType.DEPLOYS, matcher);
     }
 }
 

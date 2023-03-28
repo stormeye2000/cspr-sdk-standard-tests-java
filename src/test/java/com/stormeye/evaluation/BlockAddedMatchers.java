@@ -3,6 +3,8 @@ package com.stormeye.evaluation;
 import com.casper.sdk.model.event.DataType;
 import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
+import com.stormeye.matcher.ExpiringMatcher;
+import com.stormeye.matcher.OnMatch;
 import org.hamcrest.CustomMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +17,6 @@ import java.util.stream.Collectors;
  * @author ian@meywood.com
  */
 public class BlockAddedMatchers {
-
-    public interface OnMatch<T> {
-        void onMatch(final T match);
-    }
 
     private static final Logger logger = LoggerFactory.getLogger(BlockAddedMatchers.class);
 

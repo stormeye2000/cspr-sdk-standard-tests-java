@@ -1,5 +1,6 @@
-package com.stormeye.evaluation;
+package com.stormeye.matcher;
 
+import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,18 +14,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author ian@meywood.com
  */
-public class ExpiringMatcher<T> {
+public class ExpiringMatcher<T> extends CustomMatcher<T> {
 
     private final Logger logger = LoggerFactory.getLogger(ExpiringMatcher.class);
 
     /** The matcher to use against the result */
-    private final Matcher<T> matcher;
+    private final Matcher<T> delegate;
     private final Semaphore semaphore;
     private boolean passed = false;
     private Exception error;
 
-    public ExpiringMatcher(final Matcher<T> matcher) {
-        this.matcher = matcher;
+    public ExpiringMatcher(final Matcher<T> delegate) {
+        super("Expiring matcher");
+        this.delegate = delegate;
         this.semaphore = new Semaphore(1);
 
         AtomicInteger counter = new AtomicInteger(0);
@@ -48,17 +50,7 @@ public class ExpiringMatcher<T> {
 
 
     public void match(final Object actual) {
-        try {
-            if (matcher.matches(actual)) {
-                passed = true;
-                semaphore.release();
-            }
-        } catch (final Exception e) {
-            logger.error("Error in ExpiringMatcher", e);
-            this.error = e;
-            semaphore.release();
-            throw new RuntimeException(e);
-        }
+        matches(actual);
     }
 
     public boolean waitForMatch(final long timeoutSeconds) throws Exception {
@@ -78,5 +70,22 @@ public class ExpiringMatcher<T> {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean matches(final Object actual) {
+        try {
+            if (delegate.matches(actual)) {
+                passed = true;
+                semaphore.release();
+            }
+        } catch (final Exception e) {
+            logger.error("Error in ExpiringMatcher", e);
+            this.error = e;
+            semaphore.release();
+            throw new RuntimeException(e);
+        }
+
+        return passed;
     }
 }
