@@ -1,40 +1,40 @@
 Feature: Blocks Integration Tests
   Scenario: Evaluate Block Methods
 
-    Given that the latest block is requested
-    Then a valid block is returned
-    And with a valid hash
-    And with a valid body
-    And with valid headers
-    And with valid proofs
+    Given that the latest block is returned
+    Then request the latest block via nctl
+    Then the body is equal
+    And the hash is equal
+    And the header is equal
+    And the proofs are equal
 
     Given that a block is returned by hash
-    Then a valid block is returned
-    And with a valid hash
-    And with a valid body
-    And with valid headers
-    And with valid proofs
+    Then request a block by hash via nctl
+    Then the body is equal
+    And the hash is equal
+    And the header is equal
+    And the proofs are equal
 
     Given that a block is returned by height 2
-    Then a valid block is returned
-    And with a valid hash
-    And with a valid body
-    And with valid headers
-    And with valid proofs
+    Then request the returned block from nctl via its hash
+    Then the body is equal
+    And the hash is equal
+    And the header is equal
+    And the proofs are equal
 
     Given that a block is returned by height 3
-    Then a valid block is returned
-    And with a valid hash
-    And with a valid body
-    And with valid headers
-    And with valid proofs
+    Then request the returned block from nctl via its hash
+    Then the body is equal
+    And the hash is equal
+    And the header is equal
+    And the proofs are equal
 
     Given that a block is returned by height 4
-    Then a valid block is returned
-    And with a valid hash
-    And with a valid body
-    And with valid headers
-    And with valid proofs
+    Then request the returned block from nctl via its hash
+    Then the body is equal
+    And the hash is equal
+    And the header is equal
+    And the proofs are equal
 
     Given that an invalid block hash is requested
     Then a valid error message is returned
@@ -43,6 +43,7 @@ Feature: Blocks Integration Tests
     Then a valid error message is returned
 
     Given that a NCTL era switch block is requested
+    Then wait for the NCTL era switch block
     Then request the corresponding era switch block
     And the switch block hashes are equal
     And the switch block eras are equal
@@ -52,12 +53,6 @@ Feature: Blocks Integration Tests
     And the validator data is equal
 
 
-#    Given that a transfer block is requested
-#    Then a valid block is returned
-#    And with a valid hash
-#    And with a valid body
-#    And with valid headers
-#    And with valid proofs
 
 
 
