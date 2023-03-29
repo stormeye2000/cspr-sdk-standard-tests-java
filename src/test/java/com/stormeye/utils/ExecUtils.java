@@ -1,14 +1,11 @@
 package com.stormeye.utils;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stormeye.evaluation.DeployStepDefinitions;
 import com.stormeye.exceptions.NctlCommandException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,10 +48,7 @@ public class ExecUtils {
             throw new NctlCommandException(e.getMessage());
         }
 
-
     }
-
-
 
     private static class ConsoleStream implements Runnable {
         private final InputStream inputStream;

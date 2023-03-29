@@ -13,6 +13,16 @@ public enum ExecCommands {
         @Override
         public List<String> getCommand(String params) {return null;}
     },
+    NCTL_VIEW_CHAIN_BLOCK_TRANSFER{
+        @Override public List<String> getCommand() {
+            return List.of("bash", "-c", "docker exec -t storm-nctl /bin/bash -c 'source casper-node/utils/nctl/sh/views/view_chain_block_transfers.sh'");
+        }
+
+        @Override
+        public List<String> getCommand(String params) {
+            return List.of("bash", "-c", "docker exec -t storm-nctl /bin/bash -c 'source casper-node/utils/nctl/sh/views/view_chain_block_transfers.sh "  + params + "'");
+        }
+    },
     NCTL_VIEW_CHAIN_BLOCK{
         @Override public List<String> getCommand() {
             return List.of("bash", "-c", "docker exec -t storm-nctl /bin/bash -c 'source casper-node/utils/nctl/sh/views/view_chain_block.sh'");

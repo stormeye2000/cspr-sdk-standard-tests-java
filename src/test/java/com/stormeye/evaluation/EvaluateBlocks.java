@@ -2,39 +2,50 @@ package com.stormeye.evaluation;
 
 import com.casper.sdk.exception.CasperClientException;
 import com.casper.sdk.exception.NoSuchTypeException;
+import com.casper.sdk.helper.CasperTransferHelper;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.identifier.block.HeightBlockIdentifier;
 import com.casper.sdk.model.block.JsonBlockData;
 import com.casper.sdk.model.block.JsonProof;
 import com.casper.sdk.model.common.Digest;
-import com.casper.sdk.model.deploy.Delegator;
-import com.casper.sdk.model.deploy.SeigniorageAllocation;
-import com.casper.sdk.model.deploy.Validator;
+import com.casper.sdk.model.common.Ttl;
+import com.casper.sdk.model.deploy.*;
 import com.casper.sdk.model.era.EraInfoData;
+import com.casper.sdk.model.event.Event;
+import com.casper.sdk.model.event.EventType;
+import com.casper.sdk.model.event.blockadded.BlockAdded;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.storedvalue.StoredValueEraInfo;
+import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ExecCommands;
-import com.stormeye.utils.ExecUtils;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.*;
+import com.syntifi.crypto.key.Ed25519PrivateKey;
+import com.syntifi.crypto.key.Ed25519PublicKey;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
 import io.cucumber.java.AfterAll;
 import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
+import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -43,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class EvaluateBlocks {
 
+    private final Logger logger = LoggerFactory.getLogger(EvaluateBlocks.class);
     private static final String invalidBlockHash = "2fe9630b7790852e4409d815b04ca98f37effcdf9097d317b9b9b8ad658f47c8";
     private static final long invalidHeight = 9999999999L;
     private static final String blockErrorMsg = "block not known";
@@ -75,11 +87,16 @@ public class EvaluateBlocks {
 
     @Given("that the latest block is requested")
     public void thatTheLatestBlockIsRequested() {
+
+        logger.info("that the latest block is requested");
+
         parameterMap.put("blockDataSdk", getCasperService().getBlock());
     }
 
     @Given("that a block is returned by hash")
     public void thatABlockIsReturnedByHash() {
+
+        logger.info("that a block is returned by hash");
 
         parameterMap.put("latestBlock", getCasperService().getBlock().getBlock().getHash().toString());
         parameterMap.put("blockDataSdk", getCasperService().getBlock(new HashBlockIdentifier(parameterMap.get("latestBlock"))));
@@ -87,12 +104,18 @@ public class EvaluateBlocks {
 
     @Given("that a block is returned by height {int}")
     public void thatABlockIsReturnedByHeight(long height) {
+
+        logger.info("that a block is returned by height [{}]", height);
+
         parameterMap.put("blockDataSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)));
         parameterMap.put("blockHashSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)).getBlock().getHash().toString());
     }
 
     @Given("that an invalid block hash is requested")
     public void thatAnInvalidBlockHashIsRequested() {
+
+        logger.info("that an invalid block hash is requested");
+
         parameterMap.put("csprClientException",
             csprClientException = assertThrows(CasperClientException.class,
                     () -> getCasperService().getBlock(new HashBlockIdentifier(invalidBlockHash)))
@@ -101,6 +124,9 @@ public class EvaluateBlocks {
 
     @Given("that an invalid block height is requested")
     public void thatAnInvalidBlockHeightIsRequested() {
+
+        logger.info("that an invalid block height is requested");
+
         parameterMap.put("csprClientException",
                 csprClientException = assertThrows(CasperClientException.class,
                         () -> getCasperService().getBlock(new HeightBlockIdentifier(invalidHeight)))
@@ -110,6 +136,8 @@ public class EvaluateBlocks {
     @Then("a valid error message is returned")
     public void aValidErrorMessageIsReturned() {
 
+        logger.info("a valid error message is returned");
+
         final CasperClientException csprClientException = parameterMap.get("csprClientException");
 
         assertThat(csprClientException.getMessage(), is(notNullValue()));
@@ -117,27 +145,19 @@ public class EvaluateBlocks {
         assertThat(csprClientException.getMessage().toLowerCase().contains(blockErrorCode), is(true));
     }
 
-
-    @Given("that a transfer block is requested")
-    public void thatATransferBlockIsRequested() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException, IOException {
-
-//        DeployResult result = doTransfer();
-//
-//        DeployData deploy = getCasperService().getDeploy(result.getDeployHash());
-//
-//        final TransferData blockTransfers = getCasperService().getBlockTransfers();
-
-    }
-
-
     @Given("that a NCTL era switch block is requested")
     public void thatANCTLEraSwitchBlockIsRequested() {
+
+        logger.info("that a NCTL era switch block is requested");
+
         parameterMap.put("nctlEraSwitchBlockResult", execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand()));
     }
 
 
     @Then("wait for the NCTL era switch block")
-    public void waitForTheNCTLEraSwitchBlock() {
+    public void waitForTheNCTLEraSwitchBlock() throws Exception {
+
+        logger.info("wait for the NCTL era switch block");
 
         //Query NCTL to get the next era switch info
         JsonNode result = parameterMap.get("nctlEraSwitchBlockResult");
@@ -156,11 +176,17 @@ public class EvaluateBlocks {
 
     @Then("request the corresponding era switch block")
     public void requestTheCorrespondingEraSwitchBlock() {
+
+        logger.info("request the corresponding era switch block");
+
         parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(parameterMap.get("nctlEraSwitchBlock"))));
     }
 
     @And("the switch block hashes are equal")
     public void theSwitchBlockHashesAreEqual() {
+
+        logger.info("the switch block hashes are equal");
+
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
 
         assertThat(parameterMap.get("nctlEraSwitchBlock").equals(data.getEraSummary().getBlockHash()), is(true));
@@ -169,6 +195,9 @@ public class EvaluateBlocks {
 
     @And("the switch block eras are equal")
     public void theSwitchBlockErasAreEqual() throws JsonProcessingException {
+
+        logger.info("the switch block eras are equal");
+
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
         final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
 
@@ -177,6 +206,8 @@ public class EvaluateBlocks {
 
     @And("the switch block merkle proofs are equal")
     public void theSwitchBlockMerkleProofsAreEqual() throws JsonProcessingException {
+
+        logger.info("the switch block merkle proofs are equal");
 
         //The merkle proof returned from NCTL is abbreviated eg [10634 hex chars]
         //We can compare string lengths
@@ -194,6 +225,8 @@ public class EvaluateBlocks {
     @And("the switch block state root hashes are equal")
     public void theSwitchBlockStateRootHashesAreEqual() throws JsonProcessingException {
 
+        logger.info("the switch block state root hashes are equal");
+
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
         final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
 
@@ -204,6 +237,9 @@ public class EvaluateBlocks {
 
     @And("the delegator data is equal")
     public void theDelegatorDataIsEqual() throws JsonProcessingException {
+
+        logger.info("the delegator data is equal");
+
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
         final StoredValueEraInfo info = data.getEraSummary().getStoredValue();
         final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
@@ -234,6 +270,9 @@ public class EvaluateBlocks {
 
     @And("the validator data is equal")
     public void theValidatorDataIsEqual() throws JsonProcessingException {
+
+        logger.info("the validator data is equal");
+
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
         final StoredValueEraInfo info = data.getEraSummary().getStoredValue();
         final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
@@ -281,17 +320,25 @@ public class EvaluateBlocks {
 
     @Given("that the latest block is returned")
     public void thatTheLatestBlockIsReturned() {
+
+        logger.info("that the latest block is returned");
+
         parameterMap.put("blockDataSdk", getCasperService().getBlock());
     }
 
     @Then("request the latest block via nctl")
     public void requestTheLatestBlockViaNctl() {
+
+        logger.info("request the latest block via nctl");
+
         parameterMap.put("blockDataNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand()));
     }
 
 
     @Then("the body is equal")
     public void theBodyIsEqual() throws JsonProcessingException {
+
+        logger.info("the body is equal");
 
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
         final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
@@ -321,6 +368,8 @@ public class EvaluateBlocks {
     @And("the hash is equal")
     public void theHashIsEqual() throws JsonProcessingException {
 
+        logger.info("the hash is equal");
+
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
         final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
 
@@ -330,6 +379,8 @@ public class EvaluateBlocks {
 
     @And("the header is equal")
     public void theHeaderIsEqual() throws JsonProcessingException {
+
+        logger.info("the header is equal");
 
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
         final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
@@ -352,6 +403,8 @@ public class EvaluateBlocks {
     @And("the proofs are equal")
     public void theProofsAreEqual() throws JsonProcessingException {
 
+        logger.info("the proofs are equal");
+
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
         final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
 
@@ -371,6 +424,8 @@ public class EvaluateBlocks {
     @Then("request a block by hash via nctl")
     public void requestABlockByHashViaNctl() {
 
+        logger.info("request a block by hash via nctl");
+
         parameterMap.put("blockDataNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
                 "block=" + parameterMap.get("latestBlock"))
         ));
@@ -379,9 +434,101 @@ public class EvaluateBlocks {
 
     @Then("request the returned block from nctl via its hash")
     public void requestTheReturnedBlockFromNctlViaItsHash() {
+
+        logger.info("request the returned block from nctl via its hash");
+
         //NCTL doesn't have get block via height, so we use the sdk's returned block has
         parameterMap.put("blockDataNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
                 "block=" + parameterMap.get("blockHashSdk")
         )));
     }
+
+    @Given("that a transfer is initiated")
+    public void thatATransferIsInitiated() throws IOException {
+
+        final Ed25519PrivateKey senderKey = new Ed25519PrivateKey();
+        final Ed25519PublicKey receiverKey = new Ed25519PublicKey();
+
+        senderKey.readPrivateKey(AssetUtils.getUserKeyAsset(1, 1, "secret_key.pem").getFile());
+        receiverKey.readPublicKey(AssetUtils.getUserKeyAsset(1, 2, "public_key.pem").getFile());
+
+        parameterMap.put("senderKey", senderKey);
+        parameterMap.put("receiverKey", receiverKey);
+        parameterMap.put("transferAmount", BigInteger.valueOf(2500000000L));
+        parameterMap.put("gasPrice", 1L);
+        parameterMap.put("ttl", Ttl.builder().ttl(30 + "m").build());
+
+    }
+
+    @When("the deploy is put on chain")
+    public void theDeployIsPutOnChain() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+
+        final Deploy deploy = CasperTransferHelper.buildTransferDeploy(
+                parameterMap.get("senderKey"),
+                PublicKey.fromAbstractPublicKey(parameterMap.get("receiverKey")),
+                parameterMap.get("transferAmount"),
+                "casper-net-1",
+                Math.abs(new Random().nextLong()),
+                BigInteger.valueOf(100000000L),
+                parameterMap.get("gasPrice"),
+                parameterMap.get("ttl"),
+                new Date(),
+                new ArrayList<>());
+
+
+        final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+
+        parameterMap.put("deployResult", casperService.putDeploy(deploy));
+
+    }
+
+    @Then("the deploy response contains a valid deploy hash")
+    public void theDeployResponseContainsAValidDeployHash() {
+
+        final DeployResult deployResult = parameterMap.get("deployResult");
+        assertThat(deployResult, is(notNullValue()));
+        assertThat(deployResult.getDeployHash(), is(notNullValue()));
+
+    }
+
+    @Then("request the block transfer")
+    public void requestTheBlockTransfer() throws Exception {
+
+        final DeployResult deployResult = parameterMap.get("deployResult");
+
+        final ExpiringMatcher<Event<BlockAdded>> matcher = eventHandler.addEventMatcher(
+                EventType.MAIN,
+                hasTransferHashWithin(
+                        deployResult.getDeployHash(),
+                        blockAddedEvent -> parameterMap.put("matchingBlock", blockAddedEvent.getData())
+                )
+        );
+
+        assertThat(matcher.waitForMatch(300), is(true));
+
+        parameterMap.put("transferBlockSdk", getCasperService().getBlockTransfers());
+
+    }
+
+    @Then("request the block transfer from nctl")
+    public void requestTheBlockTransferFromNctl() {
+        final TransferData transferData = parameterMap.get("transferBlockSdk");
+        parameterMap.put("transferBlockNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK_TRANSFER.getCommand("block=" + transferData.getBlockHash())));
+    }
+
+    @And("the block contains the transfer hash")
+    public void theBlockContainsTheTransferHash() throws JsonProcessingException {
+
+        final DeployResult deployResult = parameterMap.get("deployResult");
+        final JsonNode transferBlockNctl = mapper.readTree(parameterMap.get("transferBlockNctl").toString());
+
+        final List<JsonNode> found = transferBlockNctl.get("body").findValues("transfer_hashes")
+                .stream()
+                .filter(q -> deployResult.getDeployHash().equals(q.textValue()))
+                .collect(Collectors.toList());
+
+        assertThat(found.size(), is(1));
+
+    }
+
 }
