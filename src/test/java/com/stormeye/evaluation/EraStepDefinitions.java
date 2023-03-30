@@ -1,6 +1,6 @@
 package com.stormeye.evaluation;
 
-import com.stormeye.exceptions.NotImplementedException;
+import com.stormeye.exception.NotImplementedException;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 

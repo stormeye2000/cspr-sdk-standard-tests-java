@@ -1,4 +1,4 @@
-package com.stormeye.exceptions;
+package com.stormeye.exception;
 
 public class NctlCommandException extends RuntimeException{
 

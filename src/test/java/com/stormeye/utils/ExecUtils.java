@@ -3,7 +3,7 @@ package com.stormeye.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stormeye.exceptions.NctlCommandException;
+import com.stormeye.exception.NctlCommandException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

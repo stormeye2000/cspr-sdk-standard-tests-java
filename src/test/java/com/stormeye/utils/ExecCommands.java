@@ -1,6 +1,5 @@
 package com.stormeye.utils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,13 +38,5 @@ public enum ExecCommands {
 
     public abstract List<String> getCommand(final String dockerName);
     public abstract List<String> getCommand(final String dockerName, final String params);
-
-    private static final List<String> MAP = new ArrayList<>();
-
-    static {
-        for (final ExecCommands command : values()) {
-            MAP.add(command.name());
-        }
-    }
 
 }
