@@ -2,7 +2,7 @@ package com.stormeye.utils;
 
 import com.casper.sdk.service.CasperService;
 import com.casper.sdk.service.EventService;
-import com.stormeye.execption.TestException;
+import com.stormeye.exception.TestException;
 
 import java.net.MalformedURLException;
 import java.net.URI;
