@@ -6,9 +6,9 @@ jobs:
     name: Setting Up NCTL
     runs-on: ubuntu-latest
     services:
-      casper-nctl:
-        image: makesoftware/casper-nctl:latest
-        options: --name casper-nctl
+      storm-nctl:
+        image: stormeye2000/cspr-nctl:latest
+        options: --name storm-nctl
         env:
           PREDEFINED_ACCOUNTS: 'true'
           MINIMUM_ROUND_EXPONENT: '12'
@@ -22,9 +22,9 @@ jobs:
       - name: Starting NCTL docker
         run: |
           echo "Wait for NCTL"
-          sleep 10s
-          docker cp casper-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec .
-          docker cp casper-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users .
+          sleep 30s
+          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec .
+          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users .
           cat chainspec/accounts.toml
 
       - name: Upload NCTL assets to artifacts
