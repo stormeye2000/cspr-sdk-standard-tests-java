@@ -12,7 +12,7 @@ dependencies {
 
     implementation('network.casper:casper-java-sdk') {
         version {
-            branch = 'main'
+            branch = 'issues/172'
         }
     }
 
