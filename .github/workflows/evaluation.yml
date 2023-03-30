@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       storm-nctl:
-        image: stormeye2000/cspr-nctl:latest
+        image: stormeye2000/cspr-nctl
         options: --name storm-nctl
         env:
           PREDEFINED_ACCOUNTS: 'true'
