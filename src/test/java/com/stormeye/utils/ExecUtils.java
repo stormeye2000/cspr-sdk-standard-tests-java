@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
+/**
+ * Executes NCTL bash commands and parses the resulting console stream into a json object
+ */
 public class ExecUtils {
     private static final Logger logger = LoggerFactory.getLogger(ExecUtils.class);
     private final ObjectMapper mapper = new ObjectMapper();
@@ -41,6 +44,7 @@ public class ExecUtils {
 
             future.get(10, TimeUnit.SECONDS);
 
+            //remove any console colour ansii info
             return mapper.readTree(response.toString().replaceAll("\u001B\\[[;\\d]*m", ""));
 
         }

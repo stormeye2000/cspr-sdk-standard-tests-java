@@ -15,7 +15,6 @@ import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
 import com.casper.sdk.model.key.PublicKey;
-import com.casper.sdk.model.storedvalue.StoredValueEraInfo;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -51,10 +50,12 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Step Definitions for Block Cucumber Tests.
+ */
+public class BlockStepDefinitions {
 
-public class EvaluateBlocks {
-
-    private final Logger logger = LoggerFactory.getLogger(EvaluateBlocks.class);
+    private final Logger logger = LoggerFactory.getLogger(BlockStepDefinitions.class);
     private static final String invalidBlockHash = "2fe9630b7790852e4409d815b04ca98f37effcdf9097d317b9b9b8ad658f47c8";
     private static final long invalidHeight = 9999999999L;
     private static final String blockErrorMsg = "block not known";
@@ -66,6 +67,7 @@ public class EvaluateBlocks {
     private final ObjectMapper mapper = new ObjectMapper();
     private static EventHandler eventHandler;
 
+    private final TestProperties testProperties = new TestProperties();
 
     @BeforeAll
     public static void setUp() throws InterruptedException {
@@ -88,7 +90,7 @@ public class EvaluateBlocks {
     @Given("that the latest block is requested")
     public void thatTheLatestBlockIsRequested() {
 
-        logger.info("that the latest block is requested");
+        logger.info("Given that the latest block is requested");
 
         parameterMap.put("blockDataSdk", getCasperService().getBlock());
     }
@@ -96,7 +98,7 @@ public class EvaluateBlocks {
     @Given("that a block is returned by hash")
     public void thatABlockIsReturnedByHash() {
 
-        logger.info("that a block is returned by hash");
+        logger.info("Given that a block is returned by hash");
 
         parameterMap.put("latestBlock", getCasperService().getBlock().getBlock().getHash().toString());
         parameterMap.put("blockDataSdk", getCasperService().getBlock(new HashBlockIdentifier(parameterMap.get("latestBlock"))));
@@ -105,7 +107,7 @@ public class EvaluateBlocks {
     @Given("that a block is returned by height {int}")
     public void thatABlockIsReturnedByHeight(long height) {
 
-        logger.info("that a block is returned by height [{}]", height);
+        logger.info("Given that a block is returned by height [{}]", height);
 
         parameterMap.put("blockDataSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)));
         parameterMap.put("blockHashSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)).getBlock().getHash().toString());
@@ -114,7 +116,7 @@ public class EvaluateBlocks {
     @Given("that an invalid block hash is requested")
     public void thatAnInvalidBlockHashIsRequested() {
 
-        logger.info("that an invalid block hash is requested");
+        logger.info("Given that an invalid block hash is requested");
 
         parameterMap.put("csprClientException",
             csprClientException = assertThrows(CasperClientException.class,
@@ -125,7 +127,7 @@ public class EvaluateBlocks {
     @Given("that an invalid block height is requested")
     public void thatAnInvalidBlockHeightIsRequested() {
 
-        logger.info("that an invalid block height is requested");
+        logger.info("Given that an invalid block height is requested");
 
         parameterMap.put("csprClientException",
                 csprClientException = assertThrows(CasperClientException.class,
@@ -136,7 +138,7 @@ public class EvaluateBlocks {
     @Then("a valid error message is returned")
     public void aValidErrorMessageIsReturned() {
 
-        logger.info("a valid error message is returned");
+        logger.info("Then a valid error message is returned");
 
         final CasperClientException csprClientException = parameterMap.get("csprClientException");
 
@@ -145,61 +147,32 @@ public class EvaluateBlocks {
         assertThat(csprClientException.getMessage().toLowerCase().contains(blockErrorCode), is(true));
     }
 
-    @Given("that a NCTL era switch block is requested")
-    public void thatANCTLEraSwitchBlockIsRequested() {
-
-        logger.info("that a NCTL era switch block is requested");
-
-        parameterMap.put("nctlEraSwitchBlockResult", execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand()));
-    }
-
-
-    @Then("wait for the NCTL era switch block")
-    public void waitForTheNCTLEraSwitchBlock() throws Exception {
-
-        logger.info("wait for the NCTL era switch block");
-
-        //Query NCTL to get the next era switch info
-        JsonNode result = parameterMap.get("nctlEraSwitchBlockResult");
-        while (!result.hasNonNull("era_summary")){
-            result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand());
-        }
-
-        assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
-        validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
-
-        parameterMap.put("nctlEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
-        parameterMap.put("nctlEraSwitchData", result);
-
-    }
-
-
     @Then("request the corresponding era switch block")
     public void requestTheCorrespondingEraSwitchBlock() {
 
-        logger.info("request the corresponding era switch block");
+        logger.info("Then request the corresponding era switch block");
 
-        parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(parameterMap.get("nctlEraSwitchBlock"))));
+        parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(parameterMap.get("nodeEraSwitchBlock"))));
     }
 
     @And("the switch block hashes are equal")
     public void theSwitchBlockHashesAreEqual() {
 
-        logger.info("the switch block hashes are equal");
+        logger.info("And the switch block hashes are equal");
 
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
 
-        assertThat(parameterMap.get("nctlEraSwitchBlock").equals(data.getEraSummary().getBlockHash()), is(true));
+        assertThat(parameterMap.get("nodeEraSwitchBlock").equals(data.getEraSummary().getBlockHash()), is(true));
 
     }
 
     @And("the switch block eras are equal")
     public void theSwitchBlockErasAreEqual() throws JsonProcessingException {
 
-        logger.info("the switch block eras are equal");
+        logger.info("And the switch block eras are equal");
 
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+        final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
 
         assertThat(node.get("era_summary").get("era_id").toString().equals(data.getEraSummary().getEraId().toString()), is(true));
     }
@@ -207,12 +180,12 @@ public class EvaluateBlocks {
     @And("the switch block merkle proofs are equal")
     public void theSwitchBlockMerkleProofsAreEqual() throws JsonProcessingException {
 
-        logger.info("the switch block merkle proofs are equal");
+        logger.info("And the switch block merkle proofs are equal");
 
         //The merkle proof returned from NCTL is abbreviated eg [10634 hex chars]
         //We can compare string lengths
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+        final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
 
         final String merkleCharCount = node.get("era_summary").get("merkle_proof").asText().replaceAll("\\D+","");
         assertThat(Integer.valueOf(merkleCharCount), is(data.getEraSummary().getMerkleProof().length()));
@@ -225,10 +198,10 @@ public class EvaluateBlocks {
     @And("the switch block state root hashes are equal")
     public void theSwitchBlockStateRootHashesAreEqual() throws JsonProcessingException {
 
-        logger.info("the switch block state root hashes are equal");
+        logger.info("And the switch block state root hashes are equal");
 
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+        final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
 
         assertThat(node.get("era_summary").get("state_root_hash").asText().equals(data.getEraSummary().getStateRootHash()), is(true));
 
@@ -238,22 +211,20 @@ public class EvaluateBlocks {
     @And("the delegator data is equal")
     public void theDelegatorDataIsEqual() throws JsonProcessingException {
 
-        logger.info("the delegator data is equal");
+        logger.info("And the delegator data is equal");
 
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final StoredValueEraInfo info = data.getEraSummary().getStoredValue();
-        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
+        final JsonNode allocations = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString())
+                .get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
 
-        final JsonNode allocations = node.get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
-        final List<JsonNode> delegatorsNctl = allocations.findValues("Delegator");
-
-        final List<SeigniorageAllocation> delegatorsSdk = info.getValue().getSeigniorageAllocations()
+        final List<SeigniorageAllocation> delegatorsSdk = data.getEraSummary()
+                .getStoredValue().getValue().getSeigniorageAllocations()
                 .stream()
                 .filter(q -> q instanceof Delegator)
                 .map (d -> (Delegator) d)
                 .collect(Collectors.toList());
 
-        delegatorsNctl.forEach(
+        allocations.findValues("Delegator").forEach(
                 d -> {
                     final List<SeigniorageAllocation> found = delegatorsSdk
                             .stream()
@@ -271,22 +242,21 @@ public class EvaluateBlocks {
     @And("the validator data is equal")
     public void theValidatorDataIsEqual() throws JsonProcessingException {
 
-        logger.info("the validator data is equal");
+        logger.info("And the validator data is equal");
 
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final StoredValueEraInfo info = data.getEraSummary().getStoredValue();
-        final JsonNode node = mapper.readTree(parameterMap.get("nctlEraSwitchData").toString());
 
-        final JsonNode allocations = node.get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
-        final List<JsonNode> validatorsNctl = allocations.findValues("Validator");
+        final JsonNode allocations = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString())
+                .get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
 
-        final List<SeigniorageAllocation> validatorsSdk = info.getValue().getSeigniorageAllocations()
+        final List<SeigniorageAllocation> validatorsSdk = data.getEraSummary()
+                .getStoredValue().getValue().getSeigniorageAllocations()
                 .stream()
                 .filter(q -> q instanceof Validator)
                 .map (d -> (Validator) d)
                 .collect(Collectors.toList());
 
-        validatorsNctl.forEach(
+        allocations.findValues("Validator").forEach(
                 d -> {
                     final List<SeigniorageAllocation> found = validatorsSdk
                             .stream()
@@ -321,43 +291,35 @@ public class EvaluateBlocks {
     @Given("that the latest block is returned")
     public void thatTheLatestBlockIsReturned() {
 
-        logger.info("that the latest block is returned");
+        logger.info("Given that the latest block is returned");
 
         parameterMap.put("blockDataSdk", getCasperService().getBlock());
-    }
-
-    @Then("request the latest block via nctl")
-    public void requestTheLatestBlockViaNctl() {
-
-        logger.info("request the latest block via nctl");
-
-        parameterMap.put("blockDataNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand()));
     }
 
 
     @Then("the body is equal")
     public void theBodyIsEqual() throws JsonProcessingException {
 
-        logger.info("the body is equal");
+        logger.info("Then the body is equal");
 
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
+        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
 
         assertThat(latestBlockSdk.getBlock().getBody(), is(notNullValue()));
 
-        assertThat(latestBlockSdk.getBlock().getBody().getProposer().toString().equals(latestBlockNctl.get("body").get("proposer").asText()), is(true));
+        assertThat(latestBlockSdk.getBlock().getBody().getProposer().toString().equals(latestBlockNode.get("body").get("proposer").asText()), is(true));
 
-        if (latestBlockNctl.get("body").get("deploy_hashes").size() == 0){
+        if (latestBlockNode.get("body").get("deploy_hashes").size() == 0){
             assertThat(latestBlockSdk.getBlock().getBody().getDeployHashes().isEmpty(), is(true));
         } else {
-            latestBlockNctl.get("body").findValues("deploy_hashes").forEach(
+            latestBlockNode.get("body").findValues("deploy_hashes").forEach(
                     d -> assertThat(latestBlockSdk.getBlock().getBody().getDeployHashes().contains(d.textValue()), is(true))
             );
         }
-        if (latestBlockNctl.get("body").get("transfer_hashes").size() == 0){
+        if (latestBlockNode.get("body").get("transfer_hashes").size() == 0){
             assertThat(latestBlockSdk.getBlock().getBody().getTransferHashes().isEmpty(), is(true));
         } else {
-            latestBlockNctl.get("body").findValues("transfer_hashes").forEach(
+            latestBlockNode.get("body").findValues("transfer_hashes").forEach(
                     t -> assertThat(latestBlockSdk.getBlock().getBody().getTransferHashes().contains(t.textValue()), is(true))
             );
         }
@@ -368,83 +330,64 @@ public class EvaluateBlocks {
     @And("the hash is equal")
     public void theHashIsEqual() throws JsonProcessingException {
 
-        logger.info("the hash is equal");
+        logger.info("And the hash is equal");
 
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
+        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
 
-        assertThat(latestBlockSdk.getBlock().getHash().toString().equals(latestBlockNctl.get("hash").asText()), is(true));
+        assertThat(latestBlockSdk.getBlock().getHash().toString().equals(latestBlockNode.get("hash").asText()), is(true));
         
     }
 
     @And("the header is equal")
     public void theHeaderIsEqual() throws JsonProcessingException {
 
-        logger.info("the header is equal");
+        logger.info("And the header is equal");
 
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
+        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
 
-        assertThat(latestBlockSdk.getBlock().getHeader().getEraId(), is(latestBlockNctl.get("header").get("era_id").asLong()));
-        assertThat(latestBlockSdk.getBlock().getHeader().getHeight(), is(latestBlockNctl.get("header").get("height").asLong()));
-        assertThat(latestBlockSdk.getBlock().getHeader().getProtocolVersion(), is(latestBlockNctl.get("header").get("protocol_version").asText()));
+        assertThat(latestBlockSdk.getBlock().getHeader().getEraId(), is(latestBlockNode.get("header").get("era_id").asLong()));
+        assertThat(latestBlockSdk.getBlock().getHeader().getHeight(), is(latestBlockNode.get("header").get("height").asLong()));
+        assertThat(latestBlockSdk.getBlock().getHeader().getProtocolVersion(), is(latestBlockNode.get("header").get("protocol_version").asText()));
 
         assertThat(latestBlockSdk.getBlock().getHeader().getAccumulatedSeed()
-                .equals(new Digest(latestBlockNctl.get("header").get("accumulated_seed").asText())), is(true));
+                .equals(new Digest(latestBlockNode.get("header").get("accumulated_seed").asText())), is(true));
         assertThat(latestBlockSdk.getBlock().getHeader().getBodyHash()
-                .equals(new Digest(latestBlockNctl.get("header").get("body_hash").asText())), is(true));
+                .equals(new Digest(latestBlockNode.get("header").get("body_hash").asText())), is(true));
         assertThat(latestBlockSdk.getBlock().getHeader().getStateRootHash()
-                .equals(new Digest(latestBlockNctl.get("header").get("state_root_hash").asText())), is(true));
+                .equals(new Digest(latestBlockNode.get("header").get("state_root_hash").asText())), is(true));
         assertThat(latestBlockSdk.getBlock().getHeader().getTimeStamp()
-                .compareTo(new DateTime(latestBlockNctl.get("header").get("timestamp").asText()).toDate()), is(0));
+                .compareTo(new DateTime(latestBlockNode.get("header").get("timestamp").asText()).toDate()), is(0));
 
     }
 
     @And("the proofs are equal")
     public void theProofsAreEqual() throws JsonProcessingException {
 
-        logger.info("the proofs are equal");
+        logger.info("And the proofs are equal");
 
         final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNctl = mapper.readTree(parameterMap.get("blockDataNctl").toString());
+        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
 
         final List<JsonProof> proofsSdk = latestBlockSdk.getBlock().getProofs();
-        assertThat(latestBlockNctl.get("proofs").findValues("public_key").size() == proofsSdk.size(), is(true));
+        assertThat(latestBlockNode.get("proofs").findValues("public_key").size() == proofsSdk.size(), is(true));
 
-        latestBlockNctl.get("proofs").findValues("public_key").forEach(
+        latestBlockNode.get("proofs").findValues("public_key").forEach(
                 p -> assertThat((int) proofsSdk.stream().filter(q -> p.asText().equals(q.getPublicKey().toString())).count(), is(1))
         );
 
-        latestBlockNctl.get("proofs").findValues("signature").forEach(
+        latestBlockNode.get("proofs").findValues("signature").forEach(
                 p -> assertThat((int) proofsSdk.stream().filter(q -> p.asText().equals(q.getSignature().toString())).count(), is(1))
         );
 
     }
 
-    @Then("request a block by hash via nctl")
-    public void requestABlockByHashViaNctl() {
-
-        logger.info("request a block by hash via nctl");
-
-        parameterMap.put("blockDataNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
-                "block=" + parameterMap.get("latestBlock"))
-        ));
-
-    }
-
-    @Then("request the returned block from nctl via its hash")
-    public void requestTheReturnedBlockFromNctlViaItsHash() {
-
-        logger.info("request the returned block from nctl via its hash");
-
-        //NCTL doesn't have get block via height, so we use the sdk's returned block has
-        parameterMap.put("blockDataNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
-                "block=" + parameterMap.get("blockHashSdk")
-        )));
-    }
 
     @Given("that a transfer is initiated")
     public void thatATransferIsInitiated() throws IOException {
+
+        logger.info("Given that a transfer is initiated");
 
         final Ed25519PrivateKey senderKey = new Ed25519PrivateKey();
         final Ed25519PublicKey receiverKey = new Ed25519PublicKey();
@@ -462,6 +405,8 @@ public class EvaluateBlocks {
 
     @When("the deploy is put on chain")
     public void theDeployIsPutOnChain() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+
+        logger.info("When the deploy is put on chain");
 
         final Deploy deploy = CasperTransferHelper.buildTransferDeploy(
                 parameterMap.get("senderKey"),
@@ -485,6 +430,8 @@ public class EvaluateBlocks {
     @Then("the deploy response contains a valid deploy hash")
     public void theDeployResponseContainsAValidDeployHash() {
 
+        logger.info("Then the deploy response contains a valid deploy hash");
+
         final DeployResult deployResult = parameterMap.get("deployResult");
         assertThat(deployResult, is(notNullValue()));
         assertThat(deployResult.getDeployHash(), is(notNullValue()));
@@ -493,6 +440,8 @@ public class EvaluateBlocks {
 
     @Then("request the block transfer")
     public void requestTheBlockTransfer() throws Exception {
+
+        logger.info("Then request the block transfer");
 
         final DeployResult deployResult = parameterMap.get("deployResult");
 
@@ -510,25 +459,85 @@ public class EvaluateBlocks {
 
     }
 
-    @Then("request the block transfer from nctl")
-    public void requestTheBlockTransferFromNctl() {
-        final TransferData transferData = parameterMap.get("transferBlockSdk");
-        parameterMap.put("transferBlockNctl", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK_TRANSFER.getCommand("block=" + transferData.getBlockHash())));
-    }
 
     @And("the block contains the transfer hash")
     public void theBlockContainsTheTransferHash() throws JsonProcessingException {
 
+        logger.info("And the block contains the transfer hash");
+
         final DeployResult deployResult = parameterMap.get("deployResult");
-        final JsonNode transferBlockNctl = mapper.readTree(parameterMap.get("transferBlockNctl").toString());
+        final List<String> transferHashes = new ArrayList<>();
 
-        final List<JsonNode> found = transferBlockNctl.get("body").findValues("transfer_hashes")
-                .stream()
-                .filter(q -> deployResult.getDeployHash().equals(q.textValue()))
-                .collect(Collectors.toList());
+        mapper.readTree(parameterMap.get("transferBlockNode").toString()).get("body").get("transfer_hashes").forEach(
+            t -> {
+                if (t.textValue().equals(deployResult.getDeployHash())){
+                    transferHashes.add(t.textValue());
+                }
+            }
+        );
 
-        assertThat(found.size(), is(1));
+        assertThat(transferHashes.size() > 0, is(true));
 
     }
 
+    @Then("request the latest block via the test node")
+    public void requestTheLatestBlockViaTheTestNode() {
+        logger.info("Then request the latest block via the test node");
+        parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(testProperties.getDockerName())));
+    }
+
+    @Then("request a block by hash via the test node")
+    public void requestABlockByHashViaTheTestNode() {
+        logger.info("Then request a block by hash via the test node");
+
+        parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
+                testProperties.getDockerName(), "block=" + parameterMap.get("latestBlock"))
+        ));
+
+    }
+
+    @Then("request the returned block from the test node via its hash")
+    public void requestTheReturnedBlockFromTheTestNodeViaItsHash() {
+        logger.info("Then request the returned block from the test node via its hash");
+
+        //NCTL doesn't have get block via height, so we use the sdk's returned block has
+        parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
+                testProperties.getDockerName(), "block=" + parameterMap.get("blockHashSdk")
+        )));
+    }
+
+    @Given("that a test node era switch block is requested")
+    public void thatATestNodeEraSwitchBlockIsRequested() {
+
+        logger.info("Given that a test node era switch block is requested");
+
+        parameterMap.put("nodeEraSwitchBlockResult", execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName())));
+    }
+
+    @Then("wait for the the test node era switch block")
+    public void waitForTheTheTestNodeEraSwitchBlock() {
+        logger.info("Then wait for the test node era switch block");
+
+        //Query NCTL to get the next era switch info
+        JsonNode result = parameterMap.get("nodeEraSwitchBlockResult");
+        while (!result.hasNonNull("era_summary")){
+            result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
+        }
+
+        assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
+        validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
+
+        parameterMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
+        parameterMap.put("nodeEraSwitchData", result);
+    }
+
+    @Then("request the block transfer from the test node")
+    public void requestTheBlockTransferFromTheTestNode() {
+
+        logger.info("Then request the block transfer from the test node");
+
+        final TransferData transferData = parameterMap.get("transferBlockSdk");
+        parameterMap.put("transferBlockNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK_TRANSFER.getCommand(
+                testProperties.getDockerName(), "block=" + transferData.getBlockHash())));
+    }
 }
