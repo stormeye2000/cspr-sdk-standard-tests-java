@@ -23,9 +23,11 @@ jobs:
         run: |
           echo "Wait for NCTL"
           sleep 30s
-          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec assets/net-1/chainspec/accounts.toml
-          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users assets/net-1
-          cat chainspec/accounts.toml
+          mkdir assets
+          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/chainspec assets
+          docker cp storm-nctl:/home/casper/casper-node/utils/nctl/assets/net-1/users assets
+          mv assets/users assets/net-1
+          mv assets/chainspec assets/net-1/chainspec          
 
       - name: Upload NCTL assets to artifacts
         uses: actions/upload-artifact@v3
