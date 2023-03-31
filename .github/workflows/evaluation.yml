@@ -32,13 +32,13 @@ jobs:
         with:
           name: nctl-accounts
           path: |
-            chainspec/accounts.toml
-            users/user-1/public_key.pem
-            users/user-1/public_key_pem
-            users/user-1/secret_key.pem         
-            users/user-2/public_key.pem
-            users/user-2/public_key_pem
-            users/user-2/secret_key.pem      
+            assets/net-1/chainspec/accounts.toml
+            assets/net-1/user-1/public_key.pem
+            assets/net-1/user-1/public_key_pem
+            assets/net-1/user-1/secret_key.pem         
+            assets/net-1/user-2/public_key.pem
+            assets/net-1/user-2/public_key_pem
+            assets/net-1/user-2/secret_key.pem      
 
       - name: Checkout code
         uses: actions/checkout@v2
