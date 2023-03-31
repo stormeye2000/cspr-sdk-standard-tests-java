@@ -60,8 +60,6 @@ jobs:
 
       - name: Test with Cucumber
         run: |
-#          mv assets/ src/test/resources/
-#          mv users/ src/test/resources/
           ls -ltra assets
           ls -ltra          
           ./gradlew clean cucumberCli
