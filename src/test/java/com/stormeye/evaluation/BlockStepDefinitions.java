@@ -20,6 +20,8 @@ import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stormeye.event.EventHandler;
+import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.*;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
@@ -143,7 +145,7 @@ public class BlockStepDefinitions {
 
         final DeployResult deployResult = parameterMap.get("deployResult");
 
-        final ExpiringMatcher<Event<BlockAdded>> matcher = eventHandler.addEventMatcher(
+        final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) eventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
                         deployResult.getDeployHash(),
