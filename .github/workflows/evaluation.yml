@@ -60,7 +60,7 @@ jobs:
 
       - name: Test with Cucumber
         run: |
-          mkdir assets/net-1
+          mkdir -p assets/net-1
           mv chainspec/ assets/net-1
           mv user-1/ assets/net-1
           mv user-2/ assets/net-1
