@@ -64,7 +64,7 @@ jobs:
         with:
           name: casper-java-sdk-jar
           path: |
-            casper-java-sdk/casper-java-sdk.jar
+            casper-java-sdk/*.jar
 
       - name: Checkout evaluation code
         uses: actions/checkout@v2
