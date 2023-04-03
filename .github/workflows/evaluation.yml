@@ -47,12 +47,7 @@ jobs:
           name: nctl-accounts
           path: |
             assets/net-1/chainspec/accounts.toml
-            assets/net-1/user-1/public_key.pem
-            assets/net-1/user-1/public_key_pem
-            assets/net-1/user-1/secret_key.pem         
-            assets/net-1/user-2/public_key.pem
-            assets/net-1/user-2/public_key_pem
-            assets/net-1/user-2/secret_key.pem      
+            assets/net-1/user-*
 
       # Checkout the latest Casper Java SDK from their repo ready for a build
       - name: Checkout SDK source code
