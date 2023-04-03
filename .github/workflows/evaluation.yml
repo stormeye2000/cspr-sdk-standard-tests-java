@@ -47,7 +47,7 @@ jobs:
         with:
           repository: casper-network/casper-java-sdk
           ref: main
-          path: casper-java-sdk
+          path: sdk
 
       - name: Setup SDK Java environment
         uses: actions/setup-java@v2
@@ -64,8 +64,7 @@ jobs:
         with:
           name: casper-java-sdk-jar
           path: |
-            casper-java-sdk/*.jar
-            *.jar
+            sdk/build/libs/*.jar
 
       - name: Checkout evaluation code
         uses: actions/checkout@v2
