@@ -1,4 +1,14 @@
-name: NCTL Integration Tests
+# This workflow will:
+#   - download and start a NCTL docker image
+#   - upload the nctl assets as a project artifact
+#   - download the latest casper-java-sdk and build the jar
+#   - upload the sdk jar as a project artifact
+#   - download the test platform
+#   - download the project artifacts and move to the required directories
+#   - run the cucumber tests via gradle
+
+
+name: CSPR NCTL Java SDK Standard Tests
 on:
   workflow_dispatch:
 jobs:
@@ -19,7 +29,8 @@ jobs:
           - 14101:14101
           - 18101:18101
     steps:
-      - name: Starting NCTL docker
+      # Build the assets folder from the started NCTL docker image
+      - name: Preparing NCTL assets on the started NCTL docker image
         run: |
           echo "Wait for NCTL"
           sleep 30s
@@ -29,6 +40,7 @@ jobs:
           mv assets/users assets/net-1
           mv assets/chainspec assets/net-1/chainspec          
 
+      # Upload the NCTL assets to a project artifact
       - name: Upload NCTL assets to artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -42,6 +54,7 @@ jobs:
             assets/net-1/user-2/public_key_pem
             assets/net-1/user-2/secret_key.pem      
 
+      # Checkout the latest Casper Java SDK from their repo ready for a build
       - name: Checkout SDK source code
         uses: actions/checkout@v2
         with:
@@ -49,16 +62,19 @@ jobs:
           ref: main
           path: casper-java-sdk
 
+      # JDK environment to build the SDK jar
       - name: Setup SDK Java environment
         uses: actions/setup-java@v2
         with:
           java-version: '11'
           distribution: 'adopt'
 
+      # Build the SDK jar files
       - name: Build SDK JAR
         working-directory: casper-java-sdk
         run: ./gradlew clean build
 
+      # Upload the built SDK jar as a project artifact
       - name: Upload SDK jar to artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -66,7 +82,8 @@ jobs:
           path: |
             casper-java-sdk/build/libs/*.jar
 
-      - name: Checkout evaluation code
+      # Checkout the test platform java code
+      - name: Checkout test platform code
         uses: actions/checkout@v2
       - name: Set up JDK 11
         uses: actions/setup-java@v2
@@ -74,26 +91,28 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
+      # Download the NCTL assets artifact
       - name: Download NCTL assets artifact
         uses: actions/download-artifact@v3
         with:
           name: nctl-accounts
 
+      # Download the SDK jar artifact
       - name: Download casper-java-sdk-jar artifact
         uses: actions/download-artifact@v3
         with:
           name: casper-java-sdk-jar
 
+      # Gradle needs execute permissions
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Test with Cucumber
+      # Move the downloaded assets to their required folders
+      # Run the actual cucumber tests
+      - name: Copy artifacts and test with cucumber
         run: |
           mkdir -p assets/net-1
           mv chainspec/ assets/net-1
           mv user-*/ assets/net-1          
           mv *.jar libs                   
-          ls assets -ltra    
-          ls libs -ltra    
-          ls -ltra          
           ./gradlew clean cucumberCli
