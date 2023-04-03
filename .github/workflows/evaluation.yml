@@ -49,15 +49,22 @@ jobs:
           ref: main
           path: casper-java-sdk
 
-      - name: Setup Java environment
+      - name: Setup SDK Java environment
         uses: actions/setup-java@v2
         with:
           java-version: '11'
           distribution: 'adopt'
 
-      - name: Build JAR using Gradle
+      - name: Build SDK JAR using Gradle
         working-directory: casper-java-sdk
         run: ./gradlew clean build
+
+      - name: Upload SDK jar to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: casper-java-sdk-jar
+          path: |
+            casper-java-sdk/casper-java-sdk.jar
 
       - name: Checkout evaluation code
         uses: actions/checkout@v2
