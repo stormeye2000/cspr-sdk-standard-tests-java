@@ -91,8 +91,8 @@ jobs:
         run: |
           mkdir -p assets/net-1
           mv chainspec/ assets/net-1
-          mv user-*/ assets/net-1
-          cp casper-java-sdk-jar/*.jar libs/
+          mv user-*/ assets/net-1          
+          ls -ltra                   
           ls assets -ltra    
           ls libs -ltra    
           ls -ltra          
