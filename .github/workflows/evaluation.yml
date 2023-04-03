@@ -92,7 +92,7 @@ jobs:
           mkdir -p assets/net-1
           mv chainspec/ assets/net-1
           mv user-*/ assets/net-1          
-          ls -ltra                   
+          mv *.jar libs                   
           ls assets -ltra    
           ls libs -ltra    
           ls -ltra          
