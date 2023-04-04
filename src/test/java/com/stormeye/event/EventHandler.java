@@ -19,19 +19,14 @@ import java.util.List;
 public class EventHandler {
 
     private final Logger logger = LoggerFactory.getLogger(EventHandler.class);
-
     private final MatcherMap matcherMap = new MatcherMap();
-
     private final List<AutoCloseable> sseSources = new ArrayList<>();
 
-    public EventHandler() throws InterruptedException {
+    public EventHandler() {
 
         consume(EventType.DEPLOYS);
         consume(EventType.MAIN);
         consume(EventType.SIGS);
-
-        // Give the threads as chance to start
-        Thread.sleep(2000L);
     }
 
     public void close() {
@@ -45,7 +40,6 @@ public class EventHandler {
         }
     }
 
-
     private void consume(final EventType eventType) {
 
         sseSources.add(
@@ -56,8 +50,7 @@ public class EventHandler {
         );
     }
 
-
-    public <T> Matcher<T> addEventMatcher(final EventType eventType, Matcher<T> matcher) {
+    public <T> Matcher<T> addEventMatcher(final EventType eventType, final Matcher<T> matcher) {
         matcherMap.addEventMatcher(eventType, matcher);
         return matcher;
     }
@@ -66,9 +59,7 @@ public class EventHandler {
         matcherMap.handleEvent(event);
     }
 
-    public <T> void removeEventMatcher(final EventType eventType, Matcher<T> matcher) {
+    public <T> void removeEventMatcher(final EventType eventType, final Matcher<T> matcher) {
         matcherMap.removeEventMatcher(eventType, matcher);
-
-
     }
 }
