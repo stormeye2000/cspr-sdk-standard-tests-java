@@ -57,7 +57,7 @@ public class DeployStepDefinitions {
     private static EventHandler eventHandler;
 
     @BeforeAll
-    public static void setUp() throws InterruptedException {
+    public static void setUp() {
         parameterMap.clear();
         eventHandler = new EventHandler();
     }
@@ -126,6 +126,8 @@ public class DeployStepDefinitions {
                 parameterMap.get("ttl"),
                 timestamp,
                 new ArrayList<>());
+
+        parameterMap.put("put-deploy", deploy);
 
 
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
@@ -211,14 +213,14 @@ public class DeployStepDefinitions {
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
         final DeployData deploy = casperService.getDeploy(deployResult.getDeployHash());
         assertThat(deploy, is(notNullValue()));
-        parameterMap.put("deployData", deploy);
+        parameterMap.put("info_get_deploy", deploy);
         assertThat(deploy.getExecutionResults().size(), is(greaterThan(0)));
     }
 
     @Then("the deploy data has an API version of {string}")
     public void theDeployDataHasAnAPIVersionOf(final String apiVersion) {
 
-        logger.info("Then  the deploy data has an API version of {}", apiVersion);
+        logger.info("Then the deploy data has an API version of {}", apiVersion);
 
         assertThat(getDeployData().getApiVersion(), is(apiVersion));
     }
@@ -311,7 +313,11 @@ public class DeployStepDefinitions {
 
     @And("the deploy has a valid body hash")
     public void theDeployHasAValidBodyHash() {
-        assertThat(getDeployData().getDeploy().getHash().isValid(), is(true));
+        assertThat(getDeployData().getDeploy().getHeader().getBodyHash().isValid(), is(true));
+
+        // Compare body hash of put deploy with
+        final Deploy deploy = parameterMap.get("put-deploy");
+        assertThat(deploy.getHeader().getBodyHash(), is(deploy.getHeader().getBodyHash()));
     }
 
     @And("the deploy has a payment amount of {long}")
@@ -324,6 +330,10 @@ public class DeployStepDefinitions {
     @And("the deploy has a valid hash")
     public void theDeployHasAValidHash() {
         assertThat(getDeployData().getDeploy().getHash().isValid(), is(true));
+
+        // Obtain the hash of the put deploy and compare to one obtained with info_get_deploy
+        final DeployResult deployResult = parameterMap.get("deployResult");
+        assertThat(getDeployData().getDeploy().getHash().toString(), is(deployResult.getDeployHash()));
     }
 
     @And("the deploy has a valid timestamp")
@@ -333,7 +343,7 @@ public class DeployStepDefinitions {
     }
 
     private static DeployData getDeployData() {
-        return parameterMap.get("deployData");
+        return parameterMap.get("info_get_deploy");
     }
 
     private NamedArg<?> getNamedArg(final List<NamedArg<?>> namedArgs, final String argName) {
