@@ -64,19 +64,16 @@ public class BlockStepDefinitions {
     private static final String blockErrorCode = "-32001";
     private static CasperClientException csprClientException;
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
-
+    private static EventHandler eventHandler;
     private final ExecUtils execUtils = new ExecUtils();
     private final ObjectMapper mapper = new ObjectMapper();
-    private static EventHandler eventHandler;
-
     private final TestProperties testProperties = new TestProperties();
 
     @BeforeAll
-    public static void setUp() throws InterruptedException {
+    public static void setUp() {
         parameterMap.clear();
         eventHandler = new EventHandler();
     }
-
 
     @SuppressWarnings("unused")
     @AfterAll
@@ -126,7 +123,6 @@ public class BlockStepDefinitions {
         assertThat(hash.isValid(), is(true));
     }
 
-
     @Then("the deploy response contains a valid deploy hash")
     public void theDeployResponseContainsAValidDeployHash() {
 
@@ -172,7 +168,6 @@ public class BlockStepDefinitions {
         parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
                 testProperties.getDockerName(), "block=" + parameterMap.get("latestBlock"))
         ));
-
     }
 
     @Then("request the returned block from the test node via its hash")
@@ -191,7 +186,6 @@ public class BlockStepDefinitions {
         logger.info("Given that a test node era switch block is requested");
 
         parameterMap.put("nodeEraSwitchBlockResult", execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName())));
-
     }
 
     @Then("wait for the the test node era switch block")
@@ -373,7 +367,6 @@ public class BlockStepDefinitions {
                     assertThat(found.isEmpty(), is(false));
                     assertThat(d.get("validator_public_key").asText().equals(((Delegator) found.get(0)).getValidatorPublicKey().toString()), is(true));
                     assertThat(d.get("amount").asText().equals(found.get(0).getAmount().toString()), is(true));
-
                 }
         );
     }
@@ -406,8 +399,6 @@ public class BlockStepDefinitions {
                     assertThat(d.get("amount").asText().equals(found.get(0).getAmount().toString()), is(true));
                 }
         );
-
-
     }
 
     @Given("that chain transfer data is initialised")
@@ -442,7 +433,6 @@ public class BlockStepDefinitions {
                 parameterMap.get("ttl"),
                 new Date(),
                 new ArrayList<>());
-
 
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 

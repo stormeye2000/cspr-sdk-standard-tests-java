@@ -1,4 +1,5 @@
 Feature: Blocks Integration Tests
+
   Scenario: Evaluate Block Methods
 
     Given that the latest block is requested via the sdk
