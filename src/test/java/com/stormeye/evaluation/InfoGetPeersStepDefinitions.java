@@ -51,7 +51,7 @@ public class InfoGetPeersStepDefinitions {
         assertThat(getPeerData().getPeers(), hasSize(peerCount));
     }
 
-    @And("the info_get_peers_result contain a valid peer with a port number of {int}")
+    @And("the info_get_peers_result contains a valid peer with a port number of {int}")
     public void theInfo_get_peers_resultContainAPeerWithAPortNumberOf(int port) {
         final Optional<PeerEntry> match = getPeerData().getPeers().stream()
                 .filter(peerEntry -> isValidPeer(port, peerEntry))
