@@ -55,7 +55,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 public class DeployStepDefinitions {
 
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static final Logger logger = LoggerFactory.getLogger(DeployStepDefinitions.class);
+    private final Logger logger = LoggerFactory.getLogger(DeployStepDefinitions.class);
     private static EventHandler eventHandler;
 
     @BeforeAll
