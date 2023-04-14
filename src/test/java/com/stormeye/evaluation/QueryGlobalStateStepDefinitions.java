@@ -1,5 +1,6 @@
 package com.stormeye.evaluation;
 
+import com.casper.sdk.exception.CasperClientException;
 import com.casper.sdk.helper.CasperTransferHelper;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.identifier.global.BlockHashIdentifier;
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
 
 import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
 import static com.stormeye.evaluation.StepConstants.*;
@@ -50,6 +50,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsIterableContaining.hasItem;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author ian@meywood.com
@@ -95,7 +96,7 @@ public class QueryGlobalStateStepDefinitions {
         final BlockHashIdentifier globalStateIdentifier = new BlockHashIdentifier(blockHash.toString());
 
         final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
-        String key = "deploy-" + deployResult.getDeployHash();
+        final String key = "deploy-" + deployResult.getDeployHash();
 
         final GlobalStateData globalStateData = casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
         assertThat(globalStateData, is(notNullValue()));
@@ -157,14 +158,54 @@ public class QueryGlobalStateStepDefinitions {
         parameterMap.put(STATE_ROOT_HASH, stateRootHash);
     }
 
-    @When("the query_global_state RCP method is invoked with the state root hash as the query identifier")
+    @When("the query_global_state RCP method is invoked with the state root hash as the query identifier and an invalid key")
     public void theQuery_global_stateRCPMethodIsInvokedWithTheStateRootHashAsTheQueryIdentifier() {
 
         logger.info("When the query_global_state RCP method is invoked with the state root hash as the query identifier");
         final StateRootHashData stateRootHash = parameterMap.get(STATE_ROOT_HASH);
         StateRootHashIdentifier globalStateIdentifier = new StateRootHashIdentifier(stateRootHash.getStateRootHash());
-        GlobalStateData globalStateData = casperService.queryGlobalState(globalStateIdentifier, null, new String[0]);
-        assertThat(globalStateData, is(notNullValue()));
+        // Need to invoke nctl-view-faucet-account to get uref
+        final String key = "uref-d0343bb766946f9f850a67765aae267044fa79a6cd50235ffff248a37534";
+        try {
+            casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
+        } catch (Exception e) {
+            if (e instanceof CasperClientException) {
+                parameterMap.put("clientException", e);
+                return;
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
+        fail("Should have thrown a CasperClientException");
+    }
+
+    @Then("an error code of {int} is returned")
+    public void anAnErrorCodeOfIsReturned(final int errorCode) {
+        final CasperClientException clientException = parameterMap.get("clientException");
+        assertThat(clientException.toString(), containsString("code: " + errorCode));
+    }
+
+    @And("an error message of {string} is returned")
+    public void anErrorMessageOfIsReturned(String errorMessage) {
+        final CasperClientException clientException = parameterMap.get("clientException");
+        assertThat(clientException.toString(), containsString(errorMessage));
+    }
+
+    @Given("the query_global_state RCP method is invoked with an invalid block hash as the query identifier")
+    public void theQuery_global_stateRCPMethodIsInvokedWithAnInvalidBlockHashAsTheQueryIdentifier() {
+        final BlockHashIdentifier globalStateIdentifier = new BlockHashIdentifier("00112233441343670f71afb96018ab193855a85adc412f81571570dea34f2ca6500");
+        final String key = "deploy-80fbb9c25eebda88e5d2eb9a0f7053ad6098d487aff841dc719e1526e0f59728";
+        try {
+            casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
+        } catch (Exception e) {
+            if (e instanceof CasperClientException) {
+                parameterMap.put("clientException", e);
+                return;
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
+        fail("Should have thrown a CasperClientException");
     }
 
     void createTransfer() throws Exception {
@@ -177,7 +218,6 @@ public class QueryGlobalStateStepDefinitions {
 
         senderKey.readPrivateKey(AssetUtils.getUserKeyAsset(1, 1, SECRET_KEY_PEM).getFile());
         receiverKey.readPublicKey(AssetUtils.getUserKeyAsset(1, 2, PUBLIC_KEY_PEM).getFile());
-
 
         final Deploy deploy = CasperTransferHelper.buildTransferDeploy(
                 senderKey,
@@ -245,4 +285,5 @@ public class QueryGlobalStateStepDefinitions {
         //noinspection unchecked
         return (T) globalStateData.getStoredValue().getValue();
     }
+
 }
