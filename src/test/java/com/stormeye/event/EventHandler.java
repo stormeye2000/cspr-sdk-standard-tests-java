@@ -14,6 +14,8 @@ import java.util.List;
 
 
 /**
+ * Helper class for consuming and matching events.
+ *
  * @author ian@meywood.com
  */
 public class EventHandler {
