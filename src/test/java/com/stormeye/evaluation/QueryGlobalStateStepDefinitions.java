@@ -19,13 +19,12 @@ import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.stateroothash.StateRootHashData;
 import com.casper.sdk.model.storedvalue.StoredValueDeployInfo;
 import com.casper.sdk.service.CasperService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.stormeye.event.EventHandler;
 import com.stormeye.matcher.ExpiringMatcher;
-import com.stormeye.utils.*;
+import com.stormeye.utils.AssetUtils;
+import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.NctlUtils;
+import com.stormeye.utils.ParameterMap;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
 import io.cucumber.java.After;
@@ -53,6 +52,8 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
+ * Cucumber step definitions for query_global_state RCP method calls.
+ *
  * @author ian@meywood.com
  */
 public class QueryGlobalStateStepDefinitions {
@@ -61,8 +62,7 @@ public class QueryGlobalStateStepDefinitions {
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private static final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
     private static final EventHandler eventHandler = new EventHandler();
-    private final TestProperties testProperties = new TestProperties();
-    private final ExecUtils execUtils = new ExecUtils();
+
 
     @Before
     public static void setUp() {
@@ -92,6 +92,8 @@ public class QueryGlobalStateStepDefinitions {
     @When("the query_global_state RCP method is invoked with the block hash as the query identifier")
     public void theQuery_global_stateRCPMethodIsInvokedWithTheBlockHashAsTheQueryIdentifier() {
 
+        logger.info("And the query_global_state RCP method is invoked with the block hash as the query identifier");
+
         final Digest blockHash = ((BlockAdded) parameterMap.get(LAST_BLOCK_ADDED)).getBlockHash();
         final BlockHashIdentifier globalStateIdentifier = new BlockHashIdentifier(blockHash.toString());
 
@@ -108,6 +110,8 @@ public class QueryGlobalStateStepDefinitions {
     @Then("a valid query_global_state_result is returned")
     public void aValidQuery_global_state_resultIsReturned() {
 
+        logger.info("Then a valid query_global_state_result is returned");
+
         final GlobalStateData globalStateData = parameterMap.get(GLOBAL_STATE_DATA);
         assertThat(globalStateData, is(notNullValue()));
         assertThat(globalStateData.getApiVersion(), is("1.0.0"));
@@ -121,6 +125,7 @@ public class QueryGlobalStateStepDefinitions {
 
     @And("the query_global_state_result contains a valid deploy info stored value")
     public void theQuery_global_state_resultContainsAValidStoredValue() {
+        logger.info("And the query_global_state_result contains a valid deploy info stored value");
         final GlobalStateData globalStateData = parameterMap.get(GLOBAL_STATE_DATA);
         assertThat(globalStateData.getStoredValue(), is(instanceOf(StoredValueDeployInfo.class)));
     }
@@ -128,7 +133,8 @@ public class QueryGlobalStateStepDefinitions {
     @And("the query_global_state_result's stored value from is the user-{int} account hash")
     public void theQuery_global_state_resultSStoredValueSFromIsTheUserAccountHash(int userId) {
 
-        final String accountHash = getAccountHash(userId);
+        logger.info("And the query_global_state_result's stored value from is the user-{int} account hash");
+        final String accountHash = NctlUtils.getAccountHash(userId);
         final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
         assertThat(storedValueDeployInfo.getFrom(), is(accountHash));
     }
@@ -136,21 +142,23 @@ public class QueryGlobalStateStepDefinitions {
 
     @And("the query_global_state_result's stored value contains a gas price of {long}")
     public void theQuery_global_state_resultSStoredValueContainsAGasPriceOf(long gasPrice) {
+        logger.info("And the query_global_state_result's stored value contains a gas price of {long}");
         final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
         assertThat(storedValueDeployInfo.getGas(), is(BigInteger.valueOf(gasPrice)));
     }
 
     @And("the query_global_state_result stored value contains the transfer hash")
     public void theQuery_global_state_resultSStoredValueContainsTheTransferHash() {
-
+        logger.info("And the query_global_state_result stored value contains the transfer hash");
         final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
         assertThat(storedValueDeployInfo.getTransfers().get(0), startsWith("transfer-"));
     }
 
     @And("the query_global_state_result stored value contains the transfer source uref")
     public void theQuery_global_state_resultSStoredValueContainsTheTransferSource() {
+        logger.info("And the query_global_state_result stored value contains the transfer source uref");
         final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
-        final String accountMainPurse = getAccountMainPurse(1);
+        final String accountMainPurse = NctlUtils.getAccountMainPurse(1);
         assertThat(storedValueDeployInfo.getSource().getJsonURef(), is(accountMainPurse));
     }
 
@@ -159,7 +167,6 @@ public class QueryGlobalStateStepDefinitions {
     public void thatTheStateRootHashIsKnown() {
 
         logger.info("Given that the state root hash is known");
-
         final StateRootHashData stateRootHash = casperService.getStateRootHash();
         assertThat(stateRootHash, is(notNullValue()));
         assertThat(stateRootHash.getStateRootHash(), notNullValue());
@@ -189,18 +196,21 @@ public class QueryGlobalStateStepDefinitions {
 
     @Then("an error code of {int} is returned")
     public void anAnErrorCodeOfIsReturned(final int errorCode) {
+
         final CasperClientException clientException = parameterMap.get("clientException");
         assertThat(clientException.toString(), containsString("code: " + errorCode));
     }
 
     @And("an error message of {string} is returned")
     public void anErrorMessageOfIsReturned(String errorMessage) {
+
         final CasperClientException clientException = parameterMap.get("clientException");
         assertThat(clientException.toString(), containsString(errorMessage));
     }
 
     @Given("the query_global_state RCP method is invoked with an invalid block hash as the query identifier")
     public void theQuery_global_stateRCPMethodIsInvokedWithAnInvalidBlockHashAsTheQueryIdentifier() {
+
         final BlockHashIdentifier globalStateIdentifier = new BlockHashIdentifier("00112233441343670f71afb96018ab193855a85adc412f81571570dea34f2ca6500");
         final String key = "deploy-80fbb9c25eebda88e5d2eb9a0f7053ad6098d487aff841dc719e1526e0f59728";
         try {
@@ -273,40 +283,9 @@ public class QueryGlobalStateStepDefinitions {
         assertThat(transferHashes, hasItem(deployResult.getDeployHash()));
     }
 
-    private String getAccountHash(final int userId) {
-        final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), s -> {
-            try {
-                return new ObjectMapper().readTree(s.substring(s.indexOf("{")));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        final TextNode accountHash = (TextNode) node.at("/stored_value/Account/account_hash");
-        assertThat(accountHash, is(notNullValue()));
-        assertThat(accountHash.asText(), startsWith("account-hash-"));
-        return accountHash.asText();
-    }
-
-    private String getAccountMainPurse(final int userId) {
-        final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), s -> {
-            try {
-                return new ObjectMapper().readTree(s.substring(s.indexOf("{")));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        final TextNode mainPurse = (TextNode) node.at("/stored_value/Account/main_purse");
-        assertThat(mainPurse, is(notNullValue()));
-        assertThat(mainPurse.asText(), startsWith("uref-"));
-        return mainPurse.asText();
-    }
-
     private static <T> T getGlobalDataDataStoredValue() {
         final GlobalStateData globalStateData = parameterMap.get(GLOBAL_STATE_DATA);
         //noinspection unchecked
         return (T) globalStateData.getStoredValue().getValue();
     }
-
 }

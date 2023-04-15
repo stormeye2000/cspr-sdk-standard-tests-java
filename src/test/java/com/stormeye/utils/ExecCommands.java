@@ -3,7 +3,7 @@ package com.stormeye.utils;
 import java.util.List;
 
 /**
- * Enum to hold all NCTL bash commandsi
+ * Enum to hold all NCTL bash commands
  */
 public enum ExecCommands {
 
