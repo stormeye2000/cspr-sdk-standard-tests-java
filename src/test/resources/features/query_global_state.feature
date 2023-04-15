@@ -8,6 +8,7 @@ Feature: query_global_state
     And the query_global_state_result's stored value from is the user-1 account hash
     And the query_global_state_result's stored value contains a gas price of 100000000
     And the query_global_state_result stored value contains the transfer hash
+    And the query_global_state_result stored value contains the transfer source uref
 
 
   Scenario: query_global_state by state root hash with invalid key

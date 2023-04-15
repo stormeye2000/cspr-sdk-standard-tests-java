@@ -147,6 +147,14 @@ public class QueryGlobalStateStepDefinitions {
         assertThat(storedValueDeployInfo.getTransfers().get(0), startsWith("transfer-"));
     }
 
+    @And("the query_global_state_result stored value contains the transfer source uref")
+    public void theQuery_global_state_resultSStoredValueContainsTheTransferSource() {
+        final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
+        final String accountMainPurse = getAccountMainPurse(1);
+        assertThat(storedValueDeployInfo.getSource().getJsonURef(), is(accountMainPurse));
+    }
+
+
     @Given("that the state root hash is known")
     public void thatTheStateRootHashIsKnown() {
 
@@ -278,6 +286,21 @@ public class QueryGlobalStateStepDefinitions {
         assertThat(accountHash, is(notNullValue()));
         assertThat(accountHash.asText(), startsWith("account-hash-"));
         return accountHash.asText();
+    }
+
+    private String getAccountMainPurse(final int userId) {
+        final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), s -> {
+            try {
+                return new ObjectMapper().readTree(s.substring(s.indexOf("{")));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        final TextNode mainPurse = (TextNode) node.at("/stored_value/Account/main_purse");
+        assertThat(mainPurse, is(notNullValue()));
+        assertThat(mainPurse.asText(), startsWith("uref-"));
+        return mainPurse.asText();
     }
 
     private static <T> T getGlobalDataDataStoredValue() {
