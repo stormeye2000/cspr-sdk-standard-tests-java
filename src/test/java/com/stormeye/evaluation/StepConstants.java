@@ -12,6 +12,7 @@ public abstract class StepConstants {
     public static final String DEPLOY_RESULT = "deployResult";
     public static final String DEPLOY_TIMESTAMP = "deploy-timestamp";
     public static final String GAS_PRICE = "gasPrice";
+    public static final String GLOBAL_STATE_DATA = "globalStateData";
     public static final String INFO_GET_DEPLOY = "info_get_deploy";
     public static final String LAST_BLOCK_ADDED = "lastBlockAdded";
     public static final String PEER_DATA = "peerData";
@@ -22,6 +23,7 @@ public abstract class StepConstants {
     public static final String SENDER_KEY = "senderKey";
     public static final String TRANSFER_AMOUNT = "transferAmount";
     public static final String TTL = "ttl";
+    public static final String STATE_ROOT_HASH = "stateRootHash";
 
     private StepConstants() {
         // prevent construction

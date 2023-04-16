@@ -4,7 +4,6 @@ import com.casper.sdk.model.peer.PeerData;
 import com.casper.sdk.model.peer.PeerEntry;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ParameterMap;
-import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -29,10 +28,6 @@ public class InfoGetPeersStepDefinitions {
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(InfoGetPeersStepDefinitions.class);
 
-    @BeforeAll
-    public static void setUp() {
-        parameterMap.clear();
-    }
 
     @Given("that the info_get_peers RPC method is invoked against a node")
     public void thatTheInfo_get_peersRPCMethodIsInvokedAgainstANode() {
@@ -75,4 +70,5 @@ public class InfoGetPeersStepDefinitions {
     private static PeerData getPeerData() {
         return parameterMap.get(PEER_DATA);
     }
+
 }
