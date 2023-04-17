@@ -3,7 +3,7 @@ package com.stormeye.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
@@ -11,13 +11,13 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
 /**
- * Utility method that call a node using nctl exec comands
+ * Utility method that call a node using nctl exec commands
  *
  * @author ian@meywood.com
  */
 public class NctlUtils {
 
-    private static TestProperties testProperties = new TestProperties();
+    private static final TestProperties testProperties = new TestProperties();
     private static final ExecUtils execUtils = new ExecUtils();
 
     public static String getAccountMainPurse(final int userId) {
@@ -29,24 +29,43 @@ public class NctlUtils {
             }
         });
 
-        final TextNode mainPurse = (TextNode) node.at("/stored_value/Account/main_purse");
+        final String mainPurse = getJsonValue(node, "stored_value/Account/main_purse");
         assertThat(mainPurse, is(notNullValue()));
-        assertThat(mainPurse.asText(), startsWith("uref-"));
-        return mainPurse.asText();
+        assertThat(mainPurse, startsWith("uref-"));
+        return mainPurse;
     }
 
     public static String getAccountHash(final int userId) {
-        final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), s -> {
-            try {
-                return new ObjectMapper().readTree(s.substring(s.indexOf("{")));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        final TextNode accountHash = (TextNode) node.at("/stored_value/Account/account_hash");
+        final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), NctlUtils::removePreamble);
+        final String accountHash = getJsonValue(node, "/stored_value/Account/account_hash");
         assertThat(accountHash, is(notNullValue()));
-        assertThat(accountHash.asText(), startsWith("account-hash-"));
-        return accountHash.asText();
+        assertThat(accountHash, startsWith("account-hash-"));
+        return accountHash;
+    }
+
+    public static JsonNode getNodeStatus(final int nodeId) {
+        return execUtils.execute(ExecCommands.NCTL_VIEW_NODE_STATUS.getCommand(testProperties.getDockerName(), "node=" + nodeId), NctlUtils::removePreamble);
+    }
+
+    private static JsonNode removePreamble(final String response
+    ) {
+        try {
+            return new ObjectMapper().readTree(response.substring(response.indexOf("{")));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T getJsonValue(final JsonNode jsonNode, final String jsonPath) {
+
+        final JsonNode at = jsonNode.at(jsonPath);
+        if (at instanceof NumericNode) {
+            //noinspection unchecked
+            return (T) at.bigIntegerValue();
+        } else {
+            //noinspection unchecked
+            return (T) at.asText();
+        }
     }
 }
+

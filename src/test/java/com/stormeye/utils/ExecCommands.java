@@ -25,6 +25,12 @@ public enum ExecCommands {
             return this.buildCommand(dockerName, "view_chain_block", params);
         }
     },
+    NCTL_VIEW_NODE_STATUS {
+        @Override
+        public List<String> getCommand(final String dockerName, final String params) {
+            return this.buildCommand(dockerName, "view_node_status", params);
+        }
+    },
     NCTL_VIEW_USER_ACCOUNT {
         @Override
         public List<String> getCommand(final String dockerName, final String params) {
