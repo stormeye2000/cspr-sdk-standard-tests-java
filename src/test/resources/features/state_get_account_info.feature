@@ -4,4 +4,5 @@ Feature: state_get_account_info
     Then a valid state_get_account_info_result is returned
     And the state_get_account_info_result contain a valid account hash
     And the state_get_account_info_result contain a valid main purse uref
-    And the state_get_account_info_result contain a valid merkelProof
+    And the state_get_account_info_result contain a valid merkel proof
+    And the state_get_account_info_result contain a valid associated keys

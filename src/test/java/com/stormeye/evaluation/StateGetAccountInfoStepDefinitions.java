@@ -7,7 +7,6 @@ import com.casper.sdk.model.block.JsonBlockData;
 import com.casper.sdk.model.key.PublicKey;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.NctlUtils;
 import com.stormeye.utils.ParameterMap;
 import com.syntifi.crypto.key.AbstractPublicKey;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
@@ -21,6 +20,8 @@ import java.io.IOException;
 import java.net.URL;
 
 import static com.stormeye.evaluation.StepConstants.STATE_ACCOUNT_INFO;
+import static com.stormeye.utils.NctlUtils.getAccountHash;
+import static com.stormeye.utils.NctlUtils.getAccountMainPurse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -60,7 +61,7 @@ public class StateGetAccountInfoStepDefinitions {
     public void theState_get_account_info_resultContainAValidAccountHash() {
         logger.info("And the state_get_account_info_result contain a valid account hash");
         final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
-        final String expectedAccountHash = NctlUtils.getAccountHash(1);
+        final String expectedAccountHash = getAccountHash(1);
         assertThat(stateAccountInfo.getAccount().getHash(), is(expectedAccountHash));
     }
 
@@ -68,16 +69,25 @@ public class StateGetAccountInfoStepDefinitions {
     public void theState_get_account_info_resultContainAValidMainPurseUref() {
         logger.info("And the state_get_account_info_result contain a valid main purse uref");
         final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
-        final String accountMainPurse = NctlUtils.getAccountMainPurse(1);
+        final String accountMainPurse = getAccountMainPurse(1);
         assertThat(stateAccountInfo.getAccount().getMainPurse(), is(accountMainPurse));
     }
 
-    @And("the state_get_account_info_result contain a valid merkelProof")
+    @And("the state_get_account_info_result contain a valid merkel proof")
     public void theState_get_account_info_resultContainAValidMerkelProof() {
         logger.info("And the state_get_account_info_result contain a valid merkelProof");
         final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
         assertThat(stateAccountInfo.getMerkelProof(), is(notNullValue()));
         assertThat(stateAccountInfo.getMerkelProof().length(), is(greaterThan(8)));
+    }
+
+    @And("the state_get_account_info_result contain a valid associated keys")
+    public void theState_get_account_info_resultContainAValidAssociatedKeys() {
+        logger.info("And the state_get_account_info_result contain a valid associated keys");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        final String expectedAccountHash = getAccountHash(1);
+        assertThat(stateAccountInfo.getAccount().getAssociatedKeys().get(0).getAccountHash(), is(expectedAccountHash));
+        assertThat(stateAccountInfo.getAccount().getAssociatedKeys().get(0).getWeight(), is(1));
     }
 
     private static String getUserOneHexPublicKey() throws IOException {
