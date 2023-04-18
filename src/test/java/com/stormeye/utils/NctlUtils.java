@@ -35,6 +35,12 @@ public class NctlUtils {
         return mainPurse;
     }
 
+    public static String getStateRootHash(final int nodeId) {
+        return execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_STATE_ROOT_HASH.getCommand(testProperties.getDockerName(), "node=" + nodeId), s ->
+                s.split("=")[1].trim()
+        );
+    }
+
     public static String getAccountHash(final int userId) {
         final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), NctlUtils::removePreamble);
         final String accountHash = getJsonValue(node, "/stored_value/Account/account_hash");
@@ -47,8 +53,7 @@ public class NctlUtils {
         return execUtils.execute(ExecCommands.NCTL_VIEW_NODE_STATUS.getCommand(testProperties.getDockerName(), "node=" + nodeId), NctlUtils::removePreamble);
     }
 
-    private static JsonNode removePreamble(final String response
-    ) {
+    private static JsonNode removePreamble(final String response) {
         try {
             return new ObjectMapper().readTree(response.substring(response.indexOf("{")));
         } catch (JsonProcessingException e) {
