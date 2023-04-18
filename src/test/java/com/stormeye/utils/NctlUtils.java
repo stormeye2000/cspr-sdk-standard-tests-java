@@ -29,7 +29,7 @@ public class NctlUtils {
             }
         });
 
-        final String mainPurse = getJsonValue(node, "stored_value/Account/main_purse");
+        final String mainPurse = getJsonValue(node, "/stored_value/Account/main_purse");
         assertThat(mainPurse, is(notNullValue()));
         assertThat(mainPurse, startsWith("uref-"));
         return mainPurse;

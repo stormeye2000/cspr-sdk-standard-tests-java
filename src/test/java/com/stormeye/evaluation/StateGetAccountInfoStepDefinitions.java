@@ -1,0 +1,90 @@
+package com.stormeye.evaluation;
+
+import com.casper.sdk.identifier.block.BlockIdentifier;
+import com.casper.sdk.identifier.block.HashBlockIdentifier;
+import com.casper.sdk.model.account.AccountData;
+import com.casper.sdk.model.block.JsonBlockData;
+import com.casper.sdk.model.key.PublicKey;
+import com.stormeye.utils.AssetUtils;
+import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.NctlUtils;
+import com.stormeye.utils.ParameterMap;
+import com.syntifi.crypto.key.AbstractPublicKey;
+import com.syntifi.crypto.key.Ed25519PrivateKey;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URL;
+
+import static com.stormeye.evaluation.StepConstants.STATE_ACCOUNT_INFO;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+
+/**
+ * Step definitions for the state_get_account_info RPC method.
+ *
+ * @author ian@meywood.com
+ */
+public class StateGetAccountInfoStepDefinitions {
+
+    private static final ParameterMap parameterMap = ParameterMap.getInstance();
+    private static final Logger logger = LoggerFactory.getLogger(StateGetAccountInfoStepDefinitions.class);
+
+    @Given("that the state_get_account_info RCP method is invoked")
+    public void thatTheStateGetAccountInfoRcpMethodIsInvoked() throws IOException {
+
+        logger.info("Given that the state_get_account_info RCP method is invoked");
+
+        final String hexPublicKey = getUserOneHexPublicKey();
+        final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock();
+        final BlockIdentifier identifier = new HashBlockIdentifier(block.getBlock().getHash().toString());
+
+        final AccountData stateAccountInfo = CasperClientProvider.getInstance().getCasperService().getStateAccountInfo(hexPublicKey, identifier);
+        parameterMap.put(STATE_ACCOUNT_INFO, stateAccountInfo);
+    }
+
+    @Then("a valid state_get_account_info_result is returned")
+    public void aValidState_get_account_info_resultIsReturned() {
+        logger.info("Then a valid state_get_account_info_result is returned");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        assertThat(stateAccountInfo, is(notNullValue()));
+    }
+
+    @And("the state_get_account_info_result contain a valid account hash")
+    public void theState_get_account_info_resultContainAValidAccountHash() {
+        logger.info("And the state_get_account_info_result contain a valid account hash");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        final String expectedAccountHash = NctlUtils.getAccountHash(1);
+        assertThat(stateAccountInfo.getAccount().getHash(), is(expectedAccountHash));
+    }
+
+    @And("the state_get_account_info_result contain a valid main purse uref")
+    public void theState_get_account_info_resultContainAValidMainPurseUref() {
+        logger.info("And the state_get_account_info_result contain a valid main purse uref");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        final String accountMainPurse = NctlUtils.getAccountMainPurse(1);
+        assertThat(stateAccountInfo.getAccount().getMainPurse(), is(accountMainPurse));
+    }
+
+    @And("the state_get_account_info_result contain a valid merkelProof")
+    public void theState_get_account_info_resultContainAValidMerkelProof() {
+        logger.info("And the state_get_account_info_result contain a valid merkelProof");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        assertThat(stateAccountInfo.getMerkelProof(), is(notNullValue()));
+        assertThat(stateAccountInfo.getMerkelProof().length(), is(greaterThan(8)));
+    }
+
+    private static String getUserOneHexPublicKey() throws IOException {
+        final URL keyUrl = AssetUtils.getUserKeyAsset(1, 1, "secret_key.pem");
+        final Ed25519PrivateKey privateKey = new Ed25519PrivateKey();
+        privateKey.readPrivateKey(keyUrl.getFile());
+        final AbstractPublicKey publicKey = privateKey.derivePublicKey();
+        return PublicKey.fromAbstractPublicKey(publicKey).getAlgoTaggedHex();
+    }
+}
