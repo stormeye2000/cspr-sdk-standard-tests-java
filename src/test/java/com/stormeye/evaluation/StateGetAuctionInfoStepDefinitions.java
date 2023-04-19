@@ -1,6 +1,7 @@
 package com.stormeye.evaluation;
 
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
+import com.casper.sdk.identifier.block.HeightBlockIdentifier;
 import com.casper.sdk.model.auction.AuctionData;
 import com.casper.sdk.model.bid.JsonBids;
 import com.casper.sdk.model.block.JsonBlockData;
@@ -48,6 +49,21 @@ public class StateGetAuctionInfoStepDefinitions {
         parameterMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
 
         final AuctionData auctionData = casperService.getStateAuctionInfo(new HashBlockIdentifier(block.getBlock().getHash().toString()));
+        parameterMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
+    }
+
+
+    @Given("that the state_get_auction_info RPC method is invoked by height block identifier")
+    public void thatTheState_get_auction_infoRPCMethodIsInvokedByHeightBlockIdentifier() {
+        logger.info("Given that the state_get_auction_info RPC method is invoked by height block identifier");
+
+        final JsonBlockData block = casperService.getBlock();
+
+        final JsonNode stateAuctionInfoJson = NctlUtils.getStateAuctionInfo();
+        assertThat(stateAuctionInfoJson, is(notNullValue()));
+        parameterMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
+
+        final AuctionData auctionData = casperService.getStateAuctionInfo(new HeightBlockIdentifier(block.getBlock().getHeader().getHeight()));
         parameterMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
     }
 
@@ -142,4 +158,5 @@ public class StateGetAuctionInfoStepDefinitions {
 
         assertThat(weight.getWeight(), is(new BigInteger(firstValidatorJson.at("/validator_weights/0/weight").asText())));
     }
+
 }
