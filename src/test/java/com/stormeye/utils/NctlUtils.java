@@ -82,5 +82,9 @@ public class NctlUtils {
                 s -> new BigInteger(s.split("=")[1].trim())
         );
     }
+
+    public static JsonNode getStateAuctionInfo() {
+        return execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_AUCTION_INFO.getCommand(testProperties.getDockerName()));
+    }
 }
 
