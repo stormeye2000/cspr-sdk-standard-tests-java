@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NumericNode;
 
+import java.math.BigInteger;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
@@ -71,6 +73,14 @@ public class NctlUtils {
             //noinspection unchecked
             return (T) at.asText();
         }
+    }
+
+    public static BigInteger geAccountBalance(final String purseUref) {
+        return execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BALANCE.getCommand(
+                        testProperties.getDockerName(),
+                        "purse-uref=" + purseUref),
+                s -> new BigInteger(s.split("=")[1].trim())
+        );
     }
 }
 
