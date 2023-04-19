@@ -22,6 +22,8 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
 /**
+ * Step definitions for state_get_balance RPC method cucumber test
+ *
  * @author ian@meywood.com
  */
 public class StateGetBalanceStepDefinitions {
@@ -55,9 +57,9 @@ public class StateGetBalanceStepDefinitions {
         assertThat(balanceData.getValue(), is(balance));
     }
 
-    @And("the state_get_balance_result contains is for api version {string}")
+    @And("the state_get_balance_result contains api version {string}")
     public void theState_get_balance_resultContainsIsForApiVersion(final String apiVersion) {
-        logger.info("And the state_get_balance_result contains is for api version {}", apiVersion);
+        logger.info("And the state_get_balance_result contains api version {}", apiVersion);
         final GetBalanceData balanceData = parameterMap.get(STATE_GET_BALANCE_RESULT);
         assertThat(balanceData.getApiVersion(), is(apiVersion));
     }
