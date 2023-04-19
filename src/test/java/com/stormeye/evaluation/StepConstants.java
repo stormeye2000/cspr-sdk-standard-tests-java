@@ -26,6 +26,7 @@ public abstract class StepConstants {
     public static final String TTL = "ttl";
     public static final String STATE_ACCOUNT_INFO = "stateAccountInfo";
     public static final String STATE_GET_BALANCE_RESULT = "stateGetBalanceResult";
+    public static final String STATE_GET_DICTIONARY_ITEM = "state_get_dictionary_item";
     public static final String STATE_ROOT_HASH = "stateRootHash";
     public static final String STATUS_DATA = "statusData";
 
