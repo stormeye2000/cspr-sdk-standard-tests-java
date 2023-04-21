@@ -1,7 +1,7 @@
 Feature: info_get_status
 
   Scenario: info_get_status
-    Given that the info_get_status is invoked
+    Given that the info_get_status is invoked against nctl
     Then an info_get_status_result is returned
     And the info_get_status_result api_version is "1.0.0"
     And the info_get_status_result chainspec_name is "casper-net-1"
