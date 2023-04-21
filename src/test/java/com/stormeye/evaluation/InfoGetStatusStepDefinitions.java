@@ -42,8 +42,7 @@ public class InfoGetStatusStepDefinitions {
         parameterMap.put(EXPECTED_STATUS_DATA, expectedJsonNodeStatus);
 
         logger.info("Given that the info_get_status is invoked");
-        final StatusData status = CasperClientProvider.getInstance().getCasperService().getStatus();
-        parameterMap.put(STATUS_DATA, status);
+        parameterMap.put(STATUS_DATA, CasperClientProvider.getInstance().getCasperService().getStatus());
     }
 
     @Then("an info_get_status_result is returned")
