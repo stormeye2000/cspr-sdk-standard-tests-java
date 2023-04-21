@@ -13,6 +13,12 @@ public enum ExecCommands {
             return this.buildCommand(dockerName, "view_chain_era_info", params);
         }
     },
+    NCTL_VIEW_CHAIN_BALANCE {
+        @Override
+        public List<String> getCommand(String dockerName, String params) {
+            return this.buildCommand(dockerName, "view_chain_balance", params);
+        }
+    },
     NCTL_VIEW_CHAIN_BLOCK_TRANSFER {
         @Override
         public List<String> getCommand(final String dockerName, final String params) {
@@ -33,13 +39,13 @@ public enum ExecCommands {
     },
     NCTL_VIEW_NODE_STATUS {
         @Override
-        public List<String> getCommand ( final String dockerName, final String params){
+        public List<String> getCommand(final String dockerName, final String params) {
             return this.buildCommand(dockerName, "view_node_status", params);
         }
     },
     NCTL_VIEW_USER_ACCOUNT {
         @Override
-        public List<String> getCommand ( final String dockerName, final String params){
+        public List<String> getCommand(final String dockerName, final String params) {
             return this.buildCommand(dockerName, "view_user_account", params);
         }
     };
@@ -56,4 +62,4 @@ public enum ExecCommands {
     public abstract List<String> getCommand(final String dockerName, final String params);
 
 
-    }
+}
