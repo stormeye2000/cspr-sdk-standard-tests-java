@@ -26,7 +26,7 @@ public class GetStateRootHashStepDefinitions {
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private static final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
 
-    @Given("that the chain_get_state_root_hash RCP method is invoked")
+    @Given("that the chain_get_state_root_hash RCP method is invoked against nctl")
     public void thatTheChain_get_state_root_hashRCPMethodIsInvoked() {
 
         logger.info("Given that the chain_get_state_root_hash RCP method is invoked");
