@@ -3,10 +3,13 @@ package com.stormeye.evaluation;
 import com.casper.sdk.identifier.block.BlockIdentifier;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.model.account.AccountData;
+import com.casper.sdk.model.account.ActionThresholds;
 import com.casper.sdk.model.block.JsonBlockData;
 import com.casper.sdk.model.key.PublicKey;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.NctlUtils;
 import com.stormeye.utils.ParameterMap;
 import com.syntifi.crypto.key.AbstractPublicKey;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
@@ -20,10 +23,9 @@ import java.io.IOException;
 import java.net.URL;
 
 import static com.stormeye.evaluation.StepConstants.STATE_ACCOUNT_INFO;
-import static com.stormeye.utils.NctlUtils.getAccountHash;
-import static com.stormeye.utils.NctlUtils.getAccountMainPurse;
+import static com.stormeye.matcher.NctlMatchers.isValidMerkelProof;
+import static com.stormeye.utils.NctlUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
@@ -37,10 +39,10 @@ public class StateGetAccountInfoStepDefinitions {
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(StateGetAccountInfoStepDefinitions.class);
 
-    @Given("that the state_get_account_info RCP method is invoked")
+    @Given("that the state_get_account_info RCP method is invoked against nctl")
     public void thatTheStateGetAccountInfoRcpMethodIsInvoked() throws IOException {
 
-        logger.info("Given that the state_get_account_info RCP method is invoked");
+        logger.info("Given that the state_get_account_info RCP method is invoked against nctl");
 
         final String hexPublicKey = getUserOneHexPublicKey();
         final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock();
@@ -78,7 +80,7 @@ public class StateGetAccountInfoStepDefinitions {
         logger.info("And the state_get_account_info_result contain a valid merkelProof");
         final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
         assertThat(stateAccountInfo.getMerkelProof(), is(notNullValue()));
-        assertThat(stateAccountInfo.getMerkelProof().length(), is(greaterThan(8)));
+        assertThat(stateAccountInfo.getMerkelProof(), is(isValidMerkelProof(NctlUtils.getAccountMerkelProof(1))));
     }
 
     @And("the state_get_account_info_result contain a valid associated keys")
@@ -88,6 +90,26 @@ public class StateGetAccountInfoStepDefinitions {
         final String expectedAccountHash = getAccountHash(1);
         assertThat(stateAccountInfo.getAccount().getAssociatedKeys().get(0).getAccountHash(), is(expectedAccountHash));
         assertThat(stateAccountInfo.getAccount().getAssociatedKeys().get(0).getWeight(), is(1));
+    }
+
+
+    @And("the state_get_account_info_result contain a valid action thresholds")
+    public void theState_get_account_info_resultContainAValidActionThresholds() {
+        logger.info("And the state_get_account_info_result contain a valid action thresholds");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        final JsonNode userAccountJson = getUserAccount(1);
+        final ActionThresholds deployment = stateAccountInfo.getAccount().getDeployment();
+        assertThat(deployment, is(notNullValue()));
+        assertThat(deployment.getDeployment(), is(userAccountJson.at("/stored_value/Account/action_thresholds/deployment").asInt()));
+        assertThat(deployment.getKeyManagement(), is(userAccountJson.at("/stored_value/Account/action_thresholds/key_management").asInt()));
+    }
+
+    @And("the state_get_account_info_result contain a valid named keys")
+    public void theState_get_account_info_resultContainAValidNamedKeys() {
+        logger.info("And the state_get_account_info_result contain a valid action thresholds");
+        final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
+        final JsonNode userAccountJson = getUserAccount(1);
+        assertThat(stateAccountInfo.getAccount().getNamedKeys().size(), is(userAccountJson.at("/stored_value/Account/named_keys").size()));
     }
 
     private static String getUserOneHexPublicKey() throws IOException {

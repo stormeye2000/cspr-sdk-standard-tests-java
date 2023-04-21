@@ -34,34 +34,33 @@ public class InfoGetStatusStepDefinitions {
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(InfoGetStatusStepDefinitions.class);
 
-    @Given("that the info_get_status is invoked")
+    @Given("that the info_get_status is invoked against nctl")
     public void thatTheInfo_get_statusIsInvoked() {
 
-        JsonNode expectedJsonNodeStatus = getNodeStatus(1);
+        final JsonNode expectedJsonNodeStatus = getNodeStatus(1);
         assertThat(expectedJsonNodeStatus, is(notNullValue()));
         parameterMap.put(EXPECTED_STATUS_DATA, expectedJsonNodeStatus);
 
         logger.info("Given that the info_get_status is invoked");
-        StatusData status = CasperClientProvider.getInstance().getCasperService().getStatus();
-        parameterMap.put(STATUS_DATA, status);
+        parameterMap.put(STATUS_DATA, CasperClientProvider.getInstance().getCasperService().getStatus());
     }
 
     @Then("an info_get_status_result is returned")
     public void anInfo_get_status_resultIsReturned() {
         logger.info("Then an info_get_status_result is returned");
-        StatusData statusData = parameterMap.get(STATUS_DATA);
+        final StatusData statusData = parameterMap.get(STATUS_DATA);
         assertThat(statusData, is(notNullValue()));
     }
 
     @And("the info_get_status_result api_version is {string}")
     public void theInfo_get_status_resultApi_versionIs(String apiVersion) {
-        StatusData statusData = parameterMap.get(STATUS_DATA);
+        final StatusData statusData = parameterMap.get(STATUS_DATA);
         assertThat(statusData.getApiVersion(), is(apiVersion));
     }
 
     @And("the info_get_status_result chainspec_name is {string}")
     public void theInfo_get_status_resultChainspec_nameIs(String chainSpecName) {
-        StatusData statusData = parameterMap.get(STATUS_DATA);
+        final StatusData statusData = parameterMap.get(STATUS_DATA);
         assertThat(statusData.getChainSpecName(), is(chainSpecName));
     }
 
