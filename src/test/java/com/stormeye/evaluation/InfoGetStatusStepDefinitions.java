@@ -34,7 +34,7 @@ public class InfoGetStatusStepDefinitions {
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(InfoGetStatusStepDefinitions.class);
 
-    @Given("that the info_get_status is invoked")
+    @Given("that the info_get_status is invoked against nctl")
     public void thatTheInfo_get_statusIsInvoked() {
 
         final JsonNode expectedJsonNodeStatus = getNodeStatus(1);
