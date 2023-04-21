@@ -23,6 +23,7 @@ import java.math.BigInteger;
 
 import static com.stormeye.evaluation.StepConstants.STATE_AUCTION_INFO_JSON;
 import static com.stormeye.evaluation.StepConstants.STATE_GET_AUCTION_INFO_RESULT;
+import static com.stormeye.utils.CurlUtils.getAuctionInfoByHash;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -40,14 +41,19 @@ public class StateGetAuctionInfoStepDefinitions {
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
     @Given("that the state_get_auction_info RPC method is invoked by hash block identifier")
-    public void thatTheState_get_auction_infoRPCMethodIsInvoked() {
+    public void thatTheState_get_auction_infoRPCMethodIsInvoked() throws Exception {
         logger.info("Given that the state_get_auction_info RPC method is invoked by hash block identifier");
         final JsonBlockData block = casperService.getBlock();
+
+        final JsonNode auctionInfoByHash = getAuctionInfoByHash(block.getBlock().getHeader().getParentHash().toString());
+        assertThat(auctionInfoByHash, is(notNullValue()));
 
         final JsonNode stateAuctionInfoJson = NctlUtils.getStateAuctionInfo();
         assertThat(stateAuctionInfoJson, is(notNullValue()));
         parameterMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
 
+        // We have to compare to current block (which may change :) as nctl does not allow to spe which block to use
+        // The only way to resole this is to use curl and compare against the JSON.
         final AuctionData auctionData = casperService.getStateAuctionInfo(new HashBlockIdentifier(block.getBlock().getHash().toString()));
         parameterMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
     }
