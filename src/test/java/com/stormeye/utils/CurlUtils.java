@@ -30,7 +30,7 @@ public class CurlUtils {
      */
     private static JsonNode rcp(final String method, final String params) throws Exception {
 
-        final URL url = new URL("http://" + testProperties.getHostname() + ":" + testProperties.getRcpPort() + "/rpc");
+        final URL url = new URL("http", testProperties.getHostname(), testProperties.getRcpPort(), "/rpc");
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         final String payload = "{\"id\":\"" + System.currentTimeMillis() + "\",\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[" + params + "]}";
 
