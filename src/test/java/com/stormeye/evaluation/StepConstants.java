@@ -24,6 +24,8 @@ public abstract class StepConstants {
     public static final String TRANSFER_AMOUNT = "transferAmount";
     public static final String TTL = "ttl";
     public static final String STATE_ROOT_HASH = "stateRootHash";
+    public static final String STATUS_DATA = "statusData";
+    public static final String EXPECTED_STATUS_DATA = "expectedStatusData";
 
     private StepConstants() {
         // prevent construction

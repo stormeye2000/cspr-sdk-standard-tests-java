@@ -9,6 +9,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
+ * Provides a singleton instance of the casper client services.
+ *
  * @author ian@meywood.com
  */
 public class CasperClientProvider {
