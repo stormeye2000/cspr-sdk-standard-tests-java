@@ -26,6 +26,7 @@ public abstract class StepConstants {
     public static final String STATE_ROOT_HASH = "stateRootHash";
     public static final String STATUS_DATA = "statusData";
     public static final String EXPECTED_STATUS_DATA = "expectedStatusData";
+    public static final String STATE_ACCOUNT_INFO = "stateAccountInfo";
 
     private StepConstants() {
         // prevent construction

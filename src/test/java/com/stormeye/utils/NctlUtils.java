@@ -29,7 +29,7 @@ public class NctlUtils {
             }
         });
 
-        final String mainPurse = getJsonValue(node, "stored_value/Account/main_purse");
+        final String mainPurse = getJsonValue(node, "/stored_value/Account/main_purse");
         assertThat(mainPurse, is(notNullValue()));
         assertThat(mainPurse, startsWith("uref-"));
         return mainPurse;
@@ -42,11 +42,23 @@ public class NctlUtils {
     }
 
     public static String getAccountHash(final int userId) {
-        final JsonNode node = execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), NctlUtils::removePreamble);
+        final JsonNode node = getUserAccount(userId);
         final String accountHash = getJsonValue(node, "/stored_value/Account/account_hash");
         assertThat(accountHash, is(notNullValue()));
         assertThat(accountHash, startsWith("account-hash-"));
         return accountHash;
+    }
+
+    public static String getAccountMerkelProof(final int userId) {
+        final JsonNode node = getUserAccount(userId);
+        final String merkelProof = getJsonValue(node, "/merkle_proof");
+        assertThat(merkelProof, is(notNullValue()));
+        assertThat(merkelProof, startsWith("["));
+        return merkelProof;
+    }
+
+    public static JsonNode getUserAccount(final int userId) {
+        return execUtils.execute(ExecCommands.NCTL_VIEW_USER_ACCOUNT.getCommand(testProperties.getDockerName(), "user=" + userId), NctlUtils::removePreamble);
     }
 
     public static JsonNode getNodeStatus(final int nodeId) {
