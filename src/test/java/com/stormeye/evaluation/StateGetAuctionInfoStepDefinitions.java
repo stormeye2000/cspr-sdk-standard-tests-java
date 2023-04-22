@@ -11,7 +11,6 @@ import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.NctlUtils;
 import com.stormeye.utils.ParameterMap;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -44,28 +43,29 @@ public class StateGetAuctionInfoStepDefinitions {
     public void thatTheState_get_auction_infoRPCMethodIsInvoked() throws Exception {
         logger.info("Given that the state_get_auction_info RPC method is invoked by hash block identifier");
         final JsonBlockData block = casperService.getBlock();
+        final String parentHash = block.getBlock().getHeader().getParentHash().toString();
+        parameterMap.put("parentHash", parentHash);
 
-        final JsonNode auctionInfoByHash = getAuctionInfoByHash(block.getBlock().getHeader().getParentHash().toString());
+        final JsonNode auctionInfoByHash = getAuctionInfoByHash(parentHash).at("/result");
         assertThat(auctionInfoByHash, is(notNullValue()));
-
-        final JsonNode stateAuctionInfoJson = NctlUtils.getStateAuctionInfo();
-        assertThat(stateAuctionInfoJson, is(notNullValue()));
-        parameterMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
+        parameterMap.put(STATE_AUCTION_INFO_JSON, auctionInfoByHash);
 
         // We have to compare to current block (which may change :) as nctl does not allow to spe which block to use
         // The only way to resole this is to use curl and compare against the JSON.
-        final AuctionData auctionData = casperService.getStateAuctionInfo(new HashBlockIdentifier(block.getBlock().getHash().toString()));
+        final AuctionData auctionData = casperService.getStateAuctionInfo(new HashBlockIdentifier(parentHash));
         parameterMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
     }
 
 
     @Given("that the state_get_auction_info RPC method is invoked by height block identifier")
-    public void thatTheState_get_auction_infoRPCMethodIsInvokedByHeightBlockIdentifier() {
+    public void thatTheState_get_auction_infoRPCMethodIsInvokedByHeightBlockIdentifier() throws Exception {
         logger.info("Given that the state_get_auction_info RPC method is invoked by height block identifier");
 
-        final JsonBlockData block = casperService.getBlock();
+        final JsonBlockData currentBlock = casperService.getBlock();
+        final String parentHash = currentBlock.getBlock().getHeader().getParentHash().toString();
+        final JsonBlockData block = casperService.getBlock(new HashBlockIdentifier(parentHash));
 
-        final JsonNode stateAuctionInfoJson = NctlUtils.getStateAuctionInfo();
+        final JsonNode stateAuctionInfoJson = getAuctionInfoByHash(parentHash).at("/result");
         assertThat(stateAuctionInfoJson, is(notNullValue()));
         parameterMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
 
