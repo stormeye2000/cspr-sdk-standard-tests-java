@@ -28,6 +28,10 @@ public class CurlUtils {
         return rcp("state_get_auction_info", "[{\"Hash\":  \"" + hash + "\"}]");
     }
 
+    public static JsonNode getValidatorChanges() throws Exception {
+        return rcp("info_get_validator_changes", "[]");
+    }
+
 
     /**
      * Obtains auction info as a JsonNode by block hash
@@ -68,5 +72,4 @@ public class CurlUtils {
 
         return new ObjectMapper().readTree(connection.getInputStream());
     }
-
 }
