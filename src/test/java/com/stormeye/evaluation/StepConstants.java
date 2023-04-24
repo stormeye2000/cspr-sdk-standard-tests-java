@@ -12,6 +12,7 @@ public abstract class StepConstants {
     public static final String DEPLOY_ACCEPTED = "deployAccepted";
     public static final String DEPLOY_RESULT = "deployResult";
     public static final String DEPLOY_TIMESTAMP = "deployTimestamp";
+    public static final String EXPECTED_JSON = "expectedJson";
     public static final String EXPECTED_STATUS_DATA = "expectedStatusData";
     public static final String GAS_PRICE = "gasPrice";
     public static final String GLOBAL_STATE_DATA = "globalStateData";

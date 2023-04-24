@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import static com.stormeye.evaluation.StepConstants.STATE_ACCOUNT_INFO;
-import static com.stormeye.matcher.NctlMatchers.isValidMerkelProof;
+import static com.stormeye.matcher.NctlMatchers.isValidMerkleProof;
 import static com.stormeye.utils.NctlUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -75,12 +75,12 @@ public class StateGetAccountInfoStepDefinitions {
         assertThat(stateAccountInfo.getAccount().getMainPurse(), is(accountMainPurse));
     }
 
-    @And("the state_get_account_info_result contain a valid merkel proof")
-    public void theState_get_account_info_resultContainAValidMerkelProof() {
-        logger.info("And the state_get_account_info_result contain a valid merkelProof");
+    @And("the state_get_account_info_result contain a valid merkle proof")
+    public void theState_get_account_info_resultContainAValidMerkleProof() {
+        logger.info("And the state_get_account_info_result contain a valid merkle proof");
         final AccountData stateAccountInfo = parameterMap.get(STATE_ACCOUNT_INFO);
         assertThat(stateAccountInfo.getMerkelProof(), is(notNullValue()));
-        assertThat(stateAccountInfo.getMerkelProof(), is(isValidMerkelProof(NctlUtils.getAccountMerkelProof(1))));
+        assertThat(stateAccountInfo.getMerkelProof(), is(isValidMerkleProof(NctlUtils.getAccountMerkelProof(1))));
     }
 
     @And("the state_get_account_info_result contain a valid associated keys")

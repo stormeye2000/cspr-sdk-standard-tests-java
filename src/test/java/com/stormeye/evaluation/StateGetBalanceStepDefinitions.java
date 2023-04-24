@@ -1,10 +1,11 @@
 package com.stormeye.evaluation;
 
-import com.casper.sdk.exception.DynamicInstanceException;
 import com.casper.sdk.model.balance.GetBalanceData;
 import com.casper.sdk.model.uref.URef;
 import com.casper.sdk.service.CasperService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.CurlUtils;
 import com.stormeye.utils.NctlUtils;
 import com.stormeye.utils.ParameterMap;
 import io.cucumber.java.en.And;
@@ -13,9 +14,9 @@ import io.cucumber.java.en.Then;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.math.BigInteger;
 
+import static com.stormeye.evaluation.StepConstants.EXPECTED_JSON;
 import static com.stormeye.evaluation.StepConstants.STATE_GET_BALANCE_RESULT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -33,12 +34,14 @@ public class StateGetBalanceStepDefinitions {
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
     @Given("that the state_get_balance RPC method is invoked against nclt user-1 purse")
-    public void thatTheState_get_balanceRPCMethodIsInvoked() throws IOException, DynamicInstanceException {
+    public void thatTheState_get_balanceRPCMethodIsInvoked() throws Exception {
         logger.info("Given that the state_get_balance RPC method is invoked");
         final String stateRootHash = NctlUtils.getStateRootHash(1);
         final String accountMainPurse = NctlUtils.getAccountMainPurse(1);
         final GetBalanceData balance = casperService.getBalance(stateRootHash, URef.fromString(accountMainPurse));
         parameterMap.put(STATE_GET_BALANCE_RESULT, balance);
+        final JsonNode json = CurlUtils.getBalance(stateRootHash, accountMainPurse);
+        parameterMap.put(EXPECTED_JSON, json);
     }
 
     @Then("a valid state_get_balance_result is returned")
@@ -64,12 +67,12 @@ public class StateGetBalanceStepDefinitions {
         assertThat(balanceData.getApiVersion(), is(apiVersion));
     }
 
-    @And("the state_get_balance_result contains a valid merkel proof")
-    public void theState_get_balance_resultContainsAValidMerkelProof() {
-        logger.info("And the state_get_balance_result contains a valid merkel proof");
-
-        // NOTE nctl does not return the Merkel proof for the balance, so we cannot verify match
+    @And("the state_get_balance_result contains a valid merkle proof")
+    public void theState_get_balance_resultContainsAValidMerkleProof() {
+        logger.info("And the state_get_balance_result contains a valid merkle proof");
         final GetBalanceData balanceData = parameterMap.get(STATE_GET_BALANCE_RESULT);
         assertThat(balanceData.getMerkleProof(), is(notNullValue()));
+        final String expectedMerkleProof = ((JsonNode) parameterMap.get(EXPECTED_JSON)).at("/result/merkle_proof").asText();
+        assertThat(balanceData.getMerkleProof(), is(expectedMerkleProof));
     }
 }
