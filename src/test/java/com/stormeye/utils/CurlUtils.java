@@ -14,8 +14,16 @@ import java.net.URL;
  */
 public class CurlUtils {
 
+    /** Properties to obtain RCP hostname and port from */
     private static final TestProperties testProperties = new TestProperties();
 
+    /**
+     * Obtains auction info as a JsonNode by block hash
+     *
+     * @param hash the block to obtain auction info for
+     * @return the Json result
+     * @throws Exception if an IO error occurs
+     */
     public static JsonNode getAuctionInfoByHash(final String hash) throws Exception {
         return rcp("state_get_auction_info", "{\"Hash\":  \"" + hash + "\"}");
     }
