@@ -33,8 +33,14 @@ public enum ExecCommands {
     },
     NCTL_VIEW_CHAIN_STATE_ROOT_HASH {
         @Override
-        public List<String> getCommand(String dockerName, String params) {
+        public List<String> getCommand(final String dockerName, final String params) {
             return this.buildCommand(dockerName, "view_chain_state_root_hash", params);
+        }
+    },
+    NCTL_VIEW_CHAIN_AUCTION_INFO {
+        @Override
+        public List<String> getCommand(final String dockerName, final String params) {
+            return this.buildCommand(dockerName,"view_chain_auction_info","");
         }
     },
     NCTL_VIEW_NODE_STATUS {

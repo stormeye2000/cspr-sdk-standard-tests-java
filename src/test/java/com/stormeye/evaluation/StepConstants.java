@@ -8,9 +8,10 @@ package com.stormeye.evaluation;
 public abstract class StepConstants {
 
     public static final String AMOUNT = "amount";
+    public static final String CLIENT_EXCEPTION = "clientException";
     public static final String DEPLOY_ACCEPTED = "deployAccepted";
     public static final String DEPLOY_RESULT = "deployResult";
-    public static final String DEPLOY_TIMESTAMP = "deploy-timestamp";
+    public static final String DEPLOY_TIMESTAMP = "deployTimestamp";
     public static final String EXPECTED_STATUS_DATA = "expectedStatusData";
     public static final String GAS_PRICE = "gasPrice";
     public static final String GLOBAL_STATE_DATA = "globalStateData";
@@ -25,7 +26,10 @@ public abstract class StepConstants {
     public static final String TRANSFER_AMOUNT = "transferAmount";
     public static final String TTL = "ttl";
     public static final String STATE_ACCOUNT_INFO = "stateAccountInfo";
+    public static final String STATE_AUCTION_INFO_JSON = "stateAuctionInfoJson";
+    public static final String STATE_GET_AUCTION_INFO_RESULT = "stateGetAuctionInfoResult";
     public static final String STATE_GET_BALANCE_RESULT = "stateGetBalanceResult";
+    public static final String STATE_GET_DICTIONARY_ITEM = "state_get_dictionary_item";
     public static final String STATE_ROOT_HASH = "stateRootHash";
     public static final String STATUS_DATA = "statusData";
 

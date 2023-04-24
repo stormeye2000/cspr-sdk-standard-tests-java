@@ -185,7 +185,7 @@ public class QueryGlobalStateStepDefinitions {
             casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
         } catch (Exception e) {
             if (e instanceof CasperClientException) {
-                parameterMap.put("clientException", e);
+                parameterMap.put(CLIENT_EXCEPTION, e);
                 return;
             } else {
                 throw new RuntimeException(e);
@@ -197,14 +197,14 @@ public class QueryGlobalStateStepDefinitions {
     @Then("an error code of {int} is returned")
     public void anAnErrorCodeOfIsReturned(final int errorCode) {
 
-        final CasperClientException clientException = parameterMap.get("clientException");
+        final CasperClientException clientException = parameterMap.get(CLIENT_EXCEPTION);
         assertThat(clientException.toString(), containsString("code: " + errorCode));
     }
 
     @And("an error message of {string} is returned")
     public void anErrorMessageOfIsReturned(String errorMessage) {
 
-        final CasperClientException clientException = parameterMap.get("clientException");
+        final CasperClientException clientException = parameterMap.get(CLIENT_EXCEPTION);
         assertThat(clientException.toString(), containsString(errorMessage));
     }
 
@@ -217,7 +217,7 @@ public class QueryGlobalStateStepDefinitions {
             casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
         } catch (Exception e) {
             if (e instanceof CasperClientException) {
-                parameterMap.put("clientException", e);
+                parameterMap.put(CLIENT_EXCEPTION, e);
                 return;
             } else {
                 throw new RuntimeException(e);
