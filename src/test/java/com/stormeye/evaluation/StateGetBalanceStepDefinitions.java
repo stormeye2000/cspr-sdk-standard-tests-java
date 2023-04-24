@@ -32,7 +32,7 @@ public class StateGetBalanceStepDefinitions {
     private static final Logger logger = LoggerFactory.getLogger(StateGetBalanceStepDefinitions.class);
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
-    @Given("that the state_get_balance RPC method is invoked against user-1 purse")
+    @Given("that the state_get_balance RPC method is invoked against nclt user-1 purse")
     public void thatTheState_get_balanceRPCMethodIsInvoked() throws IOException, DynamicInstanceException {
         logger.info("Given that the state_get_balance RPC method is invoked");
         final String stateRootHash = NctlUtils.getStateRootHash(1);
@@ -67,6 +67,8 @@ public class StateGetBalanceStepDefinitions {
     @And("the state_get_balance_result contains a valid merkel proof")
     public void theState_get_balance_resultContainsAValidMerkelProof() {
         logger.info("And the state_get_balance_result contains a valid merkel proof");
+
+        // NOTE nctl does not return the Merkel proof for the balance, so we cannot verify match
         final GetBalanceData balanceData = parameterMap.get(STATE_GET_BALANCE_RESULT);
         assertThat(balanceData.getMerkleProof(), is(notNullValue()));
     }
