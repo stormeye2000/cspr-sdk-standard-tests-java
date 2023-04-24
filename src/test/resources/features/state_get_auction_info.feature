@@ -1,4 +1,4 @@
-Feature: state_get_auction_info RCP method
+Feature: state_get_auction_info RCP method against nctl
 
   Scenario: state_get_auction_info by hash block identifier
     Given that the state_get_auction_info RPC method is invoked by hash block identifier
