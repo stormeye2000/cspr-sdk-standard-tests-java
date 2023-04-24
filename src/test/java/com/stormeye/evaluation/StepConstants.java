@@ -8,6 +8,7 @@ package com.stormeye.evaluation;
 public abstract class StepConstants {
 
     public static final String AMOUNT = "amount";
+    public static final String CLIENT_EXCEPTION = "clientException";
     public static final String DEPLOY_ACCEPTED = "deployAccepted";
     public static final String DEPLOY_RESULT = "deployResult";
     public static final String DEPLOY_TIMESTAMP = "deployTimestamp";

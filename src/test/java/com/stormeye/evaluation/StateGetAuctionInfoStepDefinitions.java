@@ -164,5 +164,4 @@ public class StateGetAuctionInfoStepDefinitions {
 
         assertThat(weight.getWeight(), is(new BigInteger(firstValidatorJson.at("/validator_weights/0/weight").asText())));
     }
-
 }
