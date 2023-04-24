@@ -1,5 +1,6 @@
 package com.stormeye.evaluation;
 
+import com.casper.sdk.exception.CasperClientException;
 import com.casper.sdk.identifier.block.HashBlockIdentifier;
 import com.casper.sdk.identifier.block.HeightBlockIdentifier;
 import com.casper.sdk.model.auction.AuctionData;
@@ -20,8 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 
-import static com.stormeye.evaluation.StepConstants.STATE_AUCTION_INFO_JSON;
-import static com.stormeye.evaluation.StepConstants.STATE_GET_AUCTION_INFO_RESULT;
+import static com.stormeye.evaluation.StepConstants.*;
 import static com.stormeye.utils.CurlUtils.getAuctionInfoByHash;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -163,5 +163,14 @@ public class StateGetAuctionInfoStepDefinitions {
         assertThat(weight.getPublicKey().getAlgoTaggedHex(), is(firstValidatorJson.at("/validator_weights/0/public_key").asText()));
 
         assertThat(weight.getWeight(), is(new BigInteger(firstValidatorJson.at("/validator_weights/0/weight").asText())));
+    }
+
+    @Given("that the state_get_auction_info RPC method is invoked by an invalid block hash identifier")
+    public void thatTheState_get_auction_infoRPCMethodIsInvokedByAnInvalidHeightBlockIdentifier() {
+        try {
+             casperService.getStateAuctionInfo(new HashBlockIdentifier("9608b4b7029a18ae35373eab879f523850a1b1fd43a3e6da774826a343af4ad2"));
+        } catch (CasperClientException e) {
+            parameterMap.put( CLIENT_EXCEPTION, e);
+        }
     }
 }
