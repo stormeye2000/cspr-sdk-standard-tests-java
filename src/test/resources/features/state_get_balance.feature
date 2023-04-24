@@ -1,4 +1,4 @@
-Feature: state_get_balance
+Feature: state_get_balance from nctl
   Scenario: state_get_balance
     Given that the state_get_balance RPC method is invoked against nclt user-1 purse
     Then a valid state_get_balance_result is returned
