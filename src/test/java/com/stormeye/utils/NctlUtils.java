@@ -53,10 +53,10 @@ public class NctlUtils {
 
     public static String getAccountMerkelProof(final int userId) {
         final JsonNode node = getUserAccount(userId);
-        final String merkelProof = getJsonValue(node, "/merkle_proof");
-        assertThat(merkelProof, is(notNullValue()));
-        assertThat(merkelProof, startsWith("["));
-        return merkelProof;
+        final String merkleProof = getJsonValue(node, "/merkle_proof");
+        assertThat(merkleProof, is(notNullValue()));
+        assertThat(merkleProof, startsWith("["));
+        return merkleProof;
     }
 
     public static JsonNode getUserAccount(final int userId) {

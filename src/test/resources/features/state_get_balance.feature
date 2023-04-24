@@ -4,4 +4,4 @@ Feature: state_get_balance
     Then a valid state_get_balance_result is returned
     And the state_get_balance_result contains the purse amount
     And the state_get_balance_result contains api version "1.0.0"
-    And the state_get_balance_result contains a valid merkel proof
+    And the state_get_balance_result contains a valid merkle proof

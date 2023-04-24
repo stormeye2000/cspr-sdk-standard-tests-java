@@ -18,7 +18,7 @@ public class NctlMatchers {
      * @param expectedNctlMerkelProof the response from NCTL as shown above
      * @return the request matcher for merkel proofs
      */
-    public static Matcher<String> isValidMerkelProof(final String expectedNctlMerkelProof) {
+    public static Matcher<String> isValidMerkleProof(final String expectedNctlMerkelProof) {
 
         return new CustomMatcher<>("Nctl Merkel proof match") {
             @Override

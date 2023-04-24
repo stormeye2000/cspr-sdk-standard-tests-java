@@ -25,7 +25,22 @@ public class CurlUtils {
      * @throws Exception if an IO error occurs
      */
     public static JsonNode getAuctionInfoByHash(final String hash) throws Exception {
-        return rcp("state_get_auction_info", "{\"Hash\":  \"" + hash + "\"}");
+        return rcp("state_get_auction_info", "[{\"Hash\":  \"" + hash + "\"}]");
+    }
+
+
+    /**
+     * Obtains auction info as a JsonNode by block hash
+     *
+     * @param stateRootHash the state root hash
+     * @param purseUref     the ref to the purse whose balance is to be obtained
+     * @return the Json result
+     * @throws Exception if an IO error occurs
+     */
+    public static JsonNode getBalance(final String stateRootHash, final String purseUref) throws Exception {
+        return rcp("state_get_balance",
+                String.format("{\"state_root_hash\":\"%s\",\"purse_uref\":\"%s\"}", stateRootHash, purseUref)
+        );
     }
 
     /**
@@ -40,7 +55,7 @@ public class CurlUtils {
 
         final URL url = new URL("http", testProperties.getHostname(), testProperties.getRcpPort(), "/rpc");
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        final String payload = "{\"id\":\"" + System.currentTimeMillis() + "\",\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[" + params + "]}";
+        final String payload = "{\"id\":\"" + System.currentTimeMillis() + "\",\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":" + params + "}";
 
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Content-Length", Integer.toString(payload.length()));
@@ -53,4 +68,5 @@ public class CurlUtils {
 
         return new ObjectMapper().readTree(connection.getInputStream());
     }
+
 }
