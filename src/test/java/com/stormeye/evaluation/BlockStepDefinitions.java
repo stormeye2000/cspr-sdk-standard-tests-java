@@ -12,8 +12,10 @@ import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.*;
 import com.casper.sdk.model.era.EraInfoData;
 import com.casper.sdk.model.event.Event;
+import com.casper.sdk.model.event.EventTarget;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
+import com.casper.sdk.model.event.step.Step;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.transfer.TransferData;
 import com.casper.sdk.service.CasperService;
@@ -21,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stormeye.event.EventHandler;
+import com.stormeye.matcher.EraMatcher;
 import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.*;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
@@ -46,7 +49,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
+import static com.stormeye.matcher.BlockAddedMatchers.hasTransferHashWithin;
+import static com.stormeye.matcher.NctlMatchers.isValidMerkleProof;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -72,7 +76,6 @@ public class BlockStepDefinitions {
     @BeforeAll
     public static void setUp() {
         parameterMap.clear();
-        eventHandler = new EventHandler();
     }
 
     @SuppressWarnings("unused")
@@ -141,6 +144,8 @@ public class BlockStepDefinitions {
 
         final DeployResult deployResult = parameterMap.get("deployResult");
 
+        eventHandler = new EventHandler(EventTarget.POJO);
+
         final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) eventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
@@ -188,15 +193,22 @@ public class BlockStepDefinitions {
         parameterMap.put("nodeEraSwitchBlockResult", execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName())));
     }
 
-    @Then("wait for the the test node era switch block")
-    public void waitForTheTheTestNodeEraSwitchBlock() {
-        logger.info("Then wait for the test node era switch block");
+    @Then("wait for the the test node era switch block step event")
+    public void waitForTheTheTestNodeEraSwitchBlock() throws Exception {
+        logger.info("Then wait for the test node era switch block step event");
 
-        //Query NCTL to get the next era switch info
-        JsonNode result = parameterMap.get("nodeEraSwitchBlockResult");
-        while (!result.hasNonNull("era_summary")){
-            result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
-        }
+        eventHandler = new EventHandler(EventTarget.RAW);
+
+        final ExpiringMatcher<Event<Step>> matcher = (ExpiringMatcher<Event<Step>>) eventHandler.addEventMatcher(
+                EventType.MAIN,
+                EraMatcher.theEraHasChanged()
+        );
+
+        assertThat(matcher.waitForMatch(5000L), is(true));
+
+        final JsonNode result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
+
+        eventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
         assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
         validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
@@ -319,13 +331,10 @@ public class BlockStepDefinitions {
     public void theSwitchBlockMerkleProofsOfTheReturnedBlockAreEqualToTheSwitchBlockMerkleProofsOfTheReturnedTestNodeBlock() throws JsonProcessingException {
         logger.info("And the switch block merkle proofs of the returned block are equal to the switch block merkle proofs of the returned test node block");
 
-        //The merkle proof returned from NCTL is abbreviated eg [10634 hex chars]
-        //We can compare string lengths
         final EraInfoData data = parameterMap.get("eraSwitchBlockData");
         final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
 
-        final String merkleCharCount = node.get("era_summary").get("merkle_proof").asText().replaceAll("\\D+","");
-        assertThat(Integer.valueOf(merkleCharCount), is(data.getEraSummary().getMerkleProof().length()));
+        assertThat(data.getEraSummary().getMerkleProof(), is(isValidMerkleProof(node.get("era_summary").get("merkle_proof").asText())));
 
         final Digest digest = new Digest(data.getEraSummary().getMerkleProof());
         assertThat(digest.isValid(), is(true));
