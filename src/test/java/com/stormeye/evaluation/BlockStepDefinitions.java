@@ -68,20 +68,24 @@ public class BlockStepDefinitions {
     private static final String blockErrorCode = "-32001";
     private static CasperClientException csprClientException;
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static EventHandler eventHandler;
+    private static EventHandler blockEventHandler;
+    private static EventHandler eraEventHandler;
     private final ExecUtils execUtils = new ExecUtils();
     private final ObjectMapper mapper = new ObjectMapper();
     private final TestProperties testProperties = new TestProperties();
 
     @BeforeAll
     public static void setUp() {
+        blockEventHandler = new EventHandler(EventTarget.POJO);
+        eraEventHandler = new EventHandler(EventTarget.RAW);
         parameterMap.clear();
     }
 
     @SuppressWarnings("unused")
     @AfterAll
     void tearDown() {
-        eventHandler.close();
+        blockEventHandler.close();
+        eraEventHandler.close();
     }
 
     private static  CasperService getCasperService() {
@@ -144,9 +148,7 @@ public class BlockStepDefinitions {
 
         final DeployResult deployResult = parameterMap.get("deployResult");
 
-        eventHandler = new EventHandler(EventTarget.POJO);
-
-        final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) eventHandler.addEventMatcher(
+        final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) blockEventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
                         deployResult.getDeployHash(),
@@ -155,6 +157,7 @@ public class BlockStepDefinitions {
         );
 
         assertThat(matcher.waitForMatch(300), is(true));
+        blockEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
         parameterMap.put("transferBlockSdk", getCasperService().getBlockTransfers());
 
@@ -197,9 +200,7 @@ public class BlockStepDefinitions {
     public void waitForTheTheTestNodeEraSwitchBlock() throws Exception {
         logger.info("Then wait for the test node era switch block step event");
 
-        eventHandler = new EventHandler(EventTarget.RAW);
-
-        final ExpiringMatcher<Event<Step>> matcher = (ExpiringMatcher<Event<Step>>) eventHandler.addEventMatcher(
+        final ExpiringMatcher<Event<Step>> matcher = (ExpiringMatcher<Event<Step>>) eraEventHandler.addEventMatcher(
                 EventType.MAIN,
                 EraMatcher.theEraHasChanged()
         );
@@ -208,7 +209,7 @@ public class BlockStepDefinitions {
 
         final JsonNode result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
 
-        eventHandler.removeEventMatcher(EventType.MAIN, matcher);
+        eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
         assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
         validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));

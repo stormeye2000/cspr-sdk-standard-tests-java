@@ -16,7 +16,7 @@ public class EraMatcher {
     public static ExpiringMatcher<Event<Step>> theEraHasChanged() {
         return new ExpiringMatcher<>(new CustomMatcher<>("A step event is encountered") {
             @Override
-            public boolean matches(Object actual) {
+            public boolean matches(final Object actual) {
                 if (actual instanceof Event && ((Event<?>) actual).getDataType() == DataType.STEP) {
                     logger.info("Step event encountered");
                     return true;
