@@ -11,6 +11,7 @@ import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.*;
 import com.casper.sdk.model.deploy.executabledeploy.ExecutableDeployItem;
 import com.casper.sdk.model.event.Event;
+import com.casper.sdk.model.event.EventTarget;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
 import com.casper.sdk.model.event.deployaccepted.DeployAccepted;
@@ -38,9 +39,8 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.util.*;
 
-import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
 import static com.stormeye.evaluation.StepConstants.*;
-import static com.stormeye.evaluation.StepConstants.SENDER_KEY;
+import static com.stormeye.matcher.BlockAddedMatchers.hasTransferHashWithin;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
@@ -61,7 +61,7 @@ public class DeployStepDefinitions {
     @BeforeAll
     public static void setUp() {
         parameterMap.clear();
-        eventHandler = new EventHandler();
+        eventHandler = new EventHandler(EventTarget.POJO);
     }
 
     @SuppressWarnings("unused")
