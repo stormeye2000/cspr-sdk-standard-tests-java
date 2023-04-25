@@ -28,7 +28,6 @@ import com.stormeye.utils.ParameterMap;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
 import io.cucumber.java.After;
-import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -62,12 +61,6 @@ public class QueryGlobalStateStepDefinitions {
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private static final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
     private static final EventHandler eventHandler = new EventHandler();
-
-
-    @Before
-    public static void setUp() {
-        parameterMap.clear();
-    }
 
     @After
     public static void after() {
