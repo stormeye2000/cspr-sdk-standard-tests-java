@@ -8,7 +8,7 @@
 #   - run the cucumber tests via gradle
 
 
-name: CSPR NCTL Java SDK Standard Tests
+name: CSPR Java SDK Standard Tests
 on:
   workflow_dispatch:
 jobs:
