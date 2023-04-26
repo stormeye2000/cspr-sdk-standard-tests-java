@@ -11,7 +11,7 @@ Points to note are:
 - Tests can be run manually within this repos action tab
 - The tests are built using Cucumber features
 
-
+To run locally, check out the repo and copy the SDK's jar files in the /libs folder. Gradle will then import it into the project.
 
 
 
