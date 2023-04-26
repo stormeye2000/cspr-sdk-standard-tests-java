@@ -35,6 +35,7 @@ public abstract class StepConstants {
     public static final String TRANSFER_AMOUNT = "transferAmount";
     public static final String TTL = "ttl";
     public static final String VALIDATORS_CHANGES = "validatorsChanges";
+    public static final String WASM_PATH = "wasmPath";
 
     private StepConstants() {
         // prevent construction
