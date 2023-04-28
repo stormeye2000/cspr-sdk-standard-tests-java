@@ -12,6 +12,7 @@ import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployInfo;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.event.Event;
+import com.casper.sdk.model.event.EventTarget;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
 import com.casper.sdk.model.globalstate.GlobalStateData;
@@ -41,8 +42,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
 import static com.stormeye.evaluation.StepConstants.*;
+import static com.stormeye.matcher.BlockAddedMatchers.hasTransferHashWithin;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
@@ -60,7 +61,7 @@ public class QueryGlobalStateStepDefinitions {
     private static final ParameterMap parameterMap = ParameterMap.getInstance();
     public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private static final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
-    private static final EventHandler eventHandler = new EventHandler();
+    private static final EventHandler eventHandler = new EventHandler(EventTarget.POJO);
 
     @After
     public static void after() {
