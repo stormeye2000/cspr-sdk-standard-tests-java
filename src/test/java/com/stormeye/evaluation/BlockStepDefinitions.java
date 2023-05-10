@@ -513,15 +513,32 @@ public class BlockStepDefinitions {
         );
     }
 
-    @Given("that a test node era switch block is requested via the sdk")
-    public void thatATestNodeEraSwitchBlockIsRequestedViaTheSdk() {
-
-    }
-
     @Then("request the corresponding era switch block via the sdk")
     public void requestTheCorrespondingEraSwitchBlockViaTheSdk() {
         logger.info("Then request the corresponding era switch block via the sdk");
 
         parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(parameterMap.get("nodeEraSwitchBlock"))));
+    }
+
+    @Given("that a step event is received")
+    public void thatAStepEventIsReceived() throws Exception {
+        logger.info("Then wait for the test node era switch block step event");
+
+        final ExpiringMatcher<Event<Step>> matcher = (ExpiringMatcher<Event<Step>>) eraEventHandler.addEventMatcher(
+                EventType.MAIN,
+                EraMatcher.theEraHasChanged()
+        );
+
+        assertThat(matcher.waitForMatch(5000L), is(true));
+
+        final JsonNode result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
+
+        eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
+
+        assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
+        validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
+
+        parameterMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
+        parameterMap.put("nodeEraSwitchData", result);
     }
 }
