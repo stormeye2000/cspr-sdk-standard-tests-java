@@ -12,7 +12,6 @@ import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.deploy.NamedArg;
 import com.casper.sdk.model.deploy.executabledeploy.ModuleBytes;
-import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
@@ -30,6 +29,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -82,10 +82,10 @@ public class WasmStepDefinitions {
 
         // Load faucet private key
         final URL faucetPrivateKeyUrl = AssetUtils.getFaucetAsset(1, "secret_key.pem");
+        assertThat(faucetPrivateKeyUrl, is(notNullValue()));
         final Ed25519PrivateKey privateKey = new Ed25519PrivateKey();
         privateKey.readPrivateKey(faucetPrivateKeyUrl.getFile());
 
-        final PublicKey faucetPublicKey = PublicKey.fromAbstractPublicKey(privateKey.derivePublicKey());
         final List<NamedArg<?>> paymentArgs = new LinkedList<>();
         paymentArgs.add(new NamedArg<>("amount", new CLValueU512(payment)));
         paymentArgs.add(new NamedArg<>("token_decimals", new CLValueU8(tokenDecimals)));
@@ -104,7 +104,7 @@ public class WasmStepDefinitions {
                 CasperConstants.DEFAULT_GAS_PRICE.value,
                 Ttl.builder().ttl("30m").build(),
                 new Date(),
-                null
+                new ArrayList<>()
         );
 
         final DeployResult deployResult = casperService.putDeploy(deploy);
