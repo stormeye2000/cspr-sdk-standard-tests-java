@@ -6,6 +6,7 @@
 #   - download the test platform
 #   - download the project artifacts and move to the required directories
 #   - run the cucumber tests via gradle
+#   - publish the xml test reports to the actions page
 
 
 name: CSPR Java SDK Standard Tests
