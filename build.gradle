@@ -63,7 +63,9 @@ task cucumberCli() {
             classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
             args = [
                     '--plugin', 'pretty',
-                    '--plugin', 'html:build/reports/tests/cucumber/cucumber-report.html',
+                    '--plugin', 'html:reports/cucumber-report.html',
+                    '--plugin', 'junit:reports/cucumber-report.xml',
+                    '--plugin', 'json:reports/cucumber-report.json',
                     '--glue', 'com.stormeye.evaluation',
                     '--glue', 'com.casper.sdk',
                     'src/test/resources/features']
