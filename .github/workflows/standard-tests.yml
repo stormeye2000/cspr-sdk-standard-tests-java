@@ -120,5 +120,4 @@ jobs:
         with:
           report_paths: 'reports/*.xml'
           detailed_summary: true
-          permissions:
-            checks: write
+
