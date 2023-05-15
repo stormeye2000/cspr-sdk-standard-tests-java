@@ -31,6 +31,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    implementation "commons-io:commons-io:${commonsIoVersion}"
     implementation "org.javatuples:javatuples:${javaTuplesVersion}"
     implementation "joda-time:joda-time:${jodaTimeVersion}"
     implementation "org.apache.cxf:cxf-rt-rs-client:${cxfRtRsSseVersion}"

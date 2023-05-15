@@ -33,6 +33,8 @@ public class TestProperties {
         return restPort;
     }
 
+
+
     public int getSsePort() {
         return ssePort;
     }
