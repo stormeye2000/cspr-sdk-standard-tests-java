@@ -54,7 +54,6 @@ public class ReadDeployStepDefinitions {
 
         final Deploy transfer = new ObjectMapper().readValue(jsonIn, Deploy.class);
         parameterMap.put("transfer", transfer);
-
     }
 
     @Then("a valid transfer deploy is created")
@@ -64,7 +63,6 @@ public class ReadDeployStepDefinitions {
         final Deploy transfer = getDeploy();
         assertThat(transfer, is(notNullValue()));
     }
-
 
     @And("the deploy hash is {string}")
     public void theDeployHashIs(final String hash) {
@@ -101,16 +99,14 @@ public class ReadDeployStepDefinitions {
         assertThat(getDeploy().getHeader().getChainName(), is(chainName));
     }
 
-
     private Deploy getDeploy() {
         return parameterMap.get("transfer");
     }
 
     @And("dependency {int} is {string}")
-    public void dependencyIs(int index, String hex) {
+    public void dependencyIs(int index, final String hex) {
         assertThat(getDeploy().getHeader().getDependencies().get(index).toString(), is(hex));
     }
-
 
     @And("the payment amount is {long}")
     public void thePaymentAmountIs(long amount) throws ValueSerializationException {
@@ -124,7 +120,7 @@ public class ReadDeployStepDefinitions {
     }
 
     @And("the session amount is {long}")
-    public void theSessionAmountIs(long amount) throws ValueSerializationException {
+    public void theSessionAmountIs(final long amount) throws ValueSerializationException {
         final NamedArg<?> namedArg = getNamedArg(getDeploy().getSession().getArgs(), "amount");
         assertThat(namedArg.getClValue(), is(new CLValueU512(BigInteger.valueOf(amount))));
     }
@@ -156,7 +152,7 @@ public class ReadDeployStepDefinitions {
         assertThat(getDeploy().getApprovals().get(0).getSignature().getAlgoTaggedHex(), is(signature));
     }
 
-    private NamedArg<?> getNamedArg(List<NamedArg<?>> args, final String name) {
+    private NamedArg<?> getNamedArg(final List<NamedArg<?>> args, final String name) {
         Optional<NamedArg<?>> namedArg = args.stream().filter(arg -> name.equals(arg.getType())).findFirst();
         assertThat(namedArg.isPresent(), is(true));
         return namedArg.get();
