@@ -113,7 +113,7 @@ jobs:
           rm -rf libs
           mkdir libs
           mv *.jar libs                   
-          ./gradlew clean cucumberCli
+          ./gradlew clean cucumberCli -DrootLogger.level=OFF
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v3
