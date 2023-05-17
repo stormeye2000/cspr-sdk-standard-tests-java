@@ -13,9 +13,22 @@ Feature: read_deploy
     And dependency 1 is "1010101010101010101010101010101010101010101010101010101010101010"
     And the payment amount is 1000000000
     And the session is a transfer
-    And the session amount is 24500000000
-    And the session target is "0101010101010101010101010101010101010101010101010101010101010101"
-    And the session additional_info is "this is transfer"
+    And the session "amount" is 24500000000
+    And the session "amount" type is "U512"
+    And the session "amount" bytes is "05005550b405"
+    And the session "amount" parsed is "24500000000"
+    And the session "id" is "255745"
+    And the session "id" type is "U64"
+    And the session "id" bytes is "01e703000000000000"
+    And the session "id" parsed is "999"
+    And the session "target" is "0101010101010101010101010101010101010101010101010101010101010101"
+    And the session "target" type is "ByteArray"
+    And the session "target" bytes is "0101010101010101010101010101010101010101010101010101010101010101"
+    And the session "target" parsed is "0101010101010101010101010101010101010101010101010101010101010101"
+    And the session "additional_info" is "this is transfer"
+    And the session "additional_info" type is "String"
+    And the session "additional_info" bytes is "1000000074686973206973207472616e73666572"
+    And the session "additional_info" parsed is "this is transfer"
     And the deploy has 1 approval
     And the approval signer is "017f747b67bd3fe63c2a736739dfe40156d622347346e70f68f51c178a75ce5537"
     And the approval signature is "0195a68b1a05731b7014e580b4c67a506e0339a7fffeaded9f24eb2e7f78b96bdd900b9be8ca33e4552a9a619dc4fc5e4e3a9f74a4b0537c14a5a8007d62a5dc06"

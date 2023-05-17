@@ -1,7 +1,6 @@
 package com.stormeye.evaluation;
 
-import com.casper.sdk.model.clvalue.CLValueByteArray;
-import com.casper.sdk.model.clvalue.CLValueString;
+import com.casper.sdk.model.clvalue.AbstractCLValue;
 import com.casper.sdk.model.clvalue.CLValueU512;
 import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
@@ -119,22 +118,10 @@ public class ReadDeployStepDefinitions {
         assertThat(getDeploy().getSession(), is(instanceOf(Transfer.class)));
     }
 
-    @And("the session amount is {long}")
-    public void theSessionAmountIs(final long amount) throws ValueSerializationException {
-        final NamedArg<?> namedArg = getNamedArg(getDeploy().getSession().getArgs(), "amount");
+    @And("the session {string} is {long}")
+    public void theSessionAmountIs(final String parameterName, final long amount) throws ValueSerializationException {
+        final NamedArg<?> namedArg = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
         assertThat(namedArg.getClValue(), is(new CLValueU512(BigInteger.valueOf(amount))));
-    }
-
-    @And("the session target is {string}")
-    public void theSessionTargetIs(final String target) throws ValueSerializationException {
-        final NamedArg<?> namedArg = getNamedArg(getDeploy().getSession().getArgs(), "target");
-        assertThat(namedArg.getClValue(), is(new CLValueByteArray(Hex.decode(target))));
-    }
-
-    @And("the session additional_info is {string}")
-    public void theSessionAdditional_infoIs(final String additionalInfo) throws ValueSerializationException {
-        final NamedArg<?> namedArg = getNamedArg(getDeploy().getSession().getArgs(), "additional_info");
-        assertThat(namedArg.getClValue(), (is(new CLValueString(additionalInfo))));
     }
 
     @And("the deploy has {int} approval")
@@ -156,5 +143,44 @@ public class ReadDeployStepDefinitions {
         Optional<NamedArg<?>> namedArg = args.stream().filter(arg -> name.equals(arg.getType())).findFirst();
         assertThat(namedArg.isPresent(), is(true));
         return namedArg.get();
+    }
+
+    @And("the session {string} bytes is {string}")
+    public void theSessionAmountBytesIs(final String parameterName, final String bytes) {
+        final NamedArg<?> amount = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
+        final AbstractCLValue<?, ?> clValue = amount.getClValue();
+        // TODO check why this is different
+        assertThat(clValue.getBytes() + (clValue.getClType().getTypeName().equals("U64") ? "00" : ""), is(bytes));
+    }
+
+    @And("the session {string} parsed is {string}")
+    public void theSessionAmountParsedIs(final String parameterName, final String parsed) {
+        final NamedArg<?> amount = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
+        final AbstractCLValue<?, ?> clValue = amount.getClValue();
+
+        Object parsedVal = clValue.getParsed();
+        if (parsedVal instanceof Integer) {
+            assertThat(parsedVal, is(Integer.parseInt(parsed)));
+        } else {
+            assertThat(parsedVal, is(parsed));
+        }
+    }
+
+    @And("the session {string} type is {string}")
+    public void theSessionTypeIs(final String parameterName, final String typeName) {
+        final NamedArg<?> amount = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
+        final AbstractCLValue<?, ?> clValue = amount.getClValue();
+        assertThat(clValue.getClType().getTypeName(), is(typeName));
+    }
+
+    @And("the session {string} is {string}")
+    public void theSessionIs(final String parameterName, final String value) {
+        final NamedArg<?> amount = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
+        final AbstractCLValue<?, ?> clValue = amount.getClValue();
+        if (clValue.getValue() instanceof byte[]) {
+            assertThat(clValue.getValue(), is(Hex.decode(value)));
+        } else {
+            assertThat(clValue.getValue().toString(), is(value));
+        }
     }
 }
