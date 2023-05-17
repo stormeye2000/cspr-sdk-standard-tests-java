@@ -139,12 +139,6 @@ public class ReadDeployStepDefinitions {
         assertThat(getDeploy().getApprovals().get(0).getSignature().getAlgoTaggedHex(), is(signature));
     }
 
-    private NamedArg<?> getNamedArg(final List<NamedArg<?>> args, final String name) {
-        Optional<NamedArg<?>> namedArg = args.stream().filter(arg -> name.equals(arg.getType())).findFirst();
-        assertThat(namedArg.isPresent(), is(true));
-        return namedArg.get();
-    }
-
     @And("the session {string} bytes is {string}")
     public void theSessionAmountBytesIs(final String parameterName, final String bytes) {
         final NamedArg<?> amount = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
@@ -158,7 +152,7 @@ public class ReadDeployStepDefinitions {
         final NamedArg<?> amount = getNamedArg(getDeploy().getSession().getArgs(), parameterName);
         final AbstractCLValue<?, ?> clValue = amount.getClValue();
 
-        Object parsedVal = clValue.getParsed();
+        final Object parsedVal = clValue.getParsed();
         if (parsedVal instanceof Integer) {
             assertThat(parsedVal, is(Integer.parseInt(parsed)));
         } else {
@@ -182,5 +176,11 @@ public class ReadDeployStepDefinitions {
         } else {
             assertThat(clValue.getValue().toString(), is(value));
         }
+    }
+
+    private NamedArg<?> getNamedArg(final List<NamedArg<?>> args, final String name) {
+        Optional<NamedArg<?>> namedArg = args.stream().filter(arg -> name.equals(arg.getType())).findFirst();
+        assertThat(namedArg.isPresent(), is(true));
+        return namedArg.get();
     }
 }
