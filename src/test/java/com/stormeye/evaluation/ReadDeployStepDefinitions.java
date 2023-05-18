@@ -9,7 +9,7 @@ import com.casper.sdk.model.deploy.executabledeploy.Transfer;
 import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.ContextMap;
 import com.syntifi.crypto.key.encdec.Hex;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
 import io.cucumber.java.en.And;
@@ -38,7 +38,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class ReadDeployStepDefinitions {
 
-    private final ParameterMap parameterMap = ParameterMap.getInstance();
+    private final ContextMap contextMap = ContextMap.getInstance();
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private final Logger logger = LoggerFactory.getLogger(ReadDeployStepDefinitions.class);
 
@@ -52,7 +52,7 @@ public class ReadDeployStepDefinitions {
         assertThat(jsonIn, is(notNullValue()));
 
         final Deploy transfer = new ObjectMapper().readValue(jsonIn, Deploy.class);
-        parameterMap.put("transfer", transfer);
+        contextMap.put("transfer", transfer);
     }
 
     @Then("a valid transfer deploy is created")
@@ -99,7 +99,7 @@ public class ReadDeployStepDefinitions {
     }
 
     private Deploy getDeploy() {
-        return parameterMap.get("transfer");
+        return contextMap.get("transfer");
     }
 
     @And("dependency {int} is {string}")

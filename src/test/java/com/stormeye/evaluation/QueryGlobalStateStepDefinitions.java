@@ -24,8 +24,8 @@ import com.stormeye.event.EventHandler;
 import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.ContextMap;
 import com.stormeye.utils.NctlUtils;
-import com.stormeye.utils.ParameterMap;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
 import io.cucumber.java.After;
@@ -58,9 +58,9 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class QueryGlobalStateStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
-    private static final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
+    private final ContextMap contextMap = ContextMap.getInstance();
+    public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
     private static final EventHandler eventHandler = new EventHandler(EventTarget.POJO);
 
     @After
@@ -79,7 +79,7 @@ public class QueryGlobalStateStepDefinitions {
 
         logger.info("Given that a valid block hash is known");
 
-        assertThat(parameterMap.get(LAST_BLOCK_ADDED), is(notNullValue()));
+        assertThat(contextMap.get(LAST_BLOCK_ADDED), is(notNullValue()));
     }
 
 
@@ -88,16 +88,16 @@ public class QueryGlobalStateStepDefinitions {
 
         logger.info("And the query_global_state RCP method is invoked with the block hash as the query identifier");
 
-        final Digest blockHash = ((BlockAdded) parameterMap.get(LAST_BLOCK_ADDED)).getBlockHash();
+        final Digest blockHash = ((BlockAdded) contextMap.get(LAST_BLOCK_ADDED)).getBlockHash();
         final BlockHashIdentifier globalStateIdentifier = new BlockHashIdentifier(blockHash.toString());
 
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
         final String key = "deploy-" + deployResult.getDeployHash();
 
         final GlobalStateData globalStateData = casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
         assertThat(globalStateData, is(notNullValue()));
 
-        parameterMap.put(GLOBAL_STATE_DATA, globalStateData);
+        contextMap.put(GLOBAL_STATE_DATA, globalStateData);
     }
 
 
@@ -106,7 +106,7 @@ public class QueryGlobalStateStepDefinitions {
 
         logger.info("Then a valid query_global_state_result is returned");
 
-        final GlobalStateData globalStateData = parameterMap.get(GLOBAL_STATE_DATA);
+        final GlobalStateData globalStateData = contextMap.get(GLOBAL_STATE_DATA);
         assertThat(globalStateData, is(notNullValue()));
         assertThat(globalStateData.getApiVersion(), is("1.0.0"));
         assertThat(globalStateData.getMerkleProof(), is(notNullValue()));
@@ -120,7 +120,7 @@ public class QueryGlobalStateStepDefinitions {
     @And("the query_global_state_result contains a valid deploy info stored value")
     public void theQuery_global_state_resultContainsAValidStoredValue() {
         logger.info("And the query_global_state_result contains a valid deploy info stored value");
-        final GlobalStateData globalStateData = parameterMap.get(GLOBAL_STATE_DATA);
+        final GlobalStateData globalStateData = contextMap.get(GLOBAL_STATE_DATA);
         assertThat(globalStateData.getStoredValue(), is(instanceOf(StoredValueDeployInfo.class)));
     }
 
@@ -164,14 +164,14 @@ public class QueryGlobalStateStepDefinitions {
         final StateRootHashData stateRootHash = casperService.getStateRootHash();
         assertThat(stateRootHash, is(notNullValue()));
         assertThat(stateRootHash.getStateRootHash(), notNullValue());
-        parameterMap.put(STATE_ROOT_HASH, stateRootHash);
+        contextMap.put(STATE_ROOT_HASH, stateRootHash);
     }
 
     @When("the query_global_state RCP method is invoked with the state root hash as the query identifier and an invalid key")
     public void theQuery_global_stateRCPMethodIsInvokedWithTheStateRootHashAsTheQueryIdentifier() {
 
         logger.info("When the query_global_state RCP method is invoked with the state root hash as the query identifier");
-        final StateRootHashData stateRootHash = parameterMap.get(STATE_ROOT_HASH);
+        final StateRootHashData stateRootHash = contextMap.get(STATE_ROOT_HASH);
         StateRootHashIdentifier globalStateIdentifier = new StateRootHashIdentifier(stateRootHash.getStateRootHash());
         // Need to invoke nctl-view-faucet-account to get uref
         final String key = "uref-d0343bb766946f9f850a67765aae267044fa79a6cd50235ffff248a37534";
@@ -179,7 +179,7 @@ public class QueryGlobalStateStepDefinitions {
             casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
         } catch (Exception e) {
             if (e instanceof CasperClientException) {
-                parameterMap.put(CLIENT_EXCEPTION, e);
+                contextMap.put(CLIENT_EXCEPTION, e);
                 return;
             } else {
                 throw new RuntimeException(e);
@@ -191,14 +191,14 @@ public class QueryGlobalStateStepDefinitions {
     @Then("an error code of {int} is returned")
     public void anAnErrorCodeOfIsReturned(final int errorCode) {
 
-        final CasperClientException clientException = parameterMap.get(CLIENT_EXCEPTION);
+        final CasperClientException clientException = contextMap.get(CLIENT_EXCEPTION);
         assertThat(clientException.toString(), containsString("code: " + errorCode));
     }
 
     @And("an error message of {string} is returned")
     public void anErrorMessageOfIsReturned(String errorMessage) {
 
-        final CasperClientException clientException = parameterMap.get(CLIENT_EXCEPTION);
+        final CasperClientException clientException = contextMap.get(CLIENT_EXCEPTION);
         assertThat(clientException.toString(), containsString(errorMessage));
     }
 
@@ -211,7 +211,7 @@ public class QueryGlobalStateStepDefinitions {
             casperService.queryGlobalState(globalStateIdentifier, key, new String[0]);
         } catch (Exception e) {
             if (e instanceof CasperClientException) {
-                parameterMap.put(CLIENT_EXCEPTION, e);
+                contextMap.put(CLIENT_EXCEPTION, e);
                 return;
             } else {
                 throw new RuntimeException(e);
@@ -243,24 +243,24 @@ public class QueryGlobalStateStepDefinitions {
                 timestamp,
                 new ArrayList<>());
 
-        parameterMap.put(PUT_DEPLOY, deploy);
+        contextMap.put(PUT_DEPLOY, deploy);
 
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
-        parameterMap.put(DEPLOY_RESULT, casperService.putDeploy(deploy));
+        contextMap.put(DEPLOY_RESULT, casperService.putDeploy(deploy));
     }
 
     void waitForBlockAdded() throws Exception {
 
         logger.info("waitForBlockAdded");
 
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
 
         final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) eventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
                         deployResult.getDeployHash(),
-                        blockAddedEvent -> parameterMap.put(LAST_BLOCK_ADDED, blockAddedEvent.getData())
+                        blockAddedEvent -> contextMap.put(LAST_BLOCK_ADDED, blockAddedEvent.getData())
                 )
         );
 
@@ -268,7 +268,7 @@ public class QueryGlobalStateStepDefinitions {
 
         eventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
-        final Digest matchingBlockHash = ((BlockAdded) parameterMap.get(LAST_BLOCK_ADDED)).getBlockHash();
+        final Digest matchingBlockHash = ((BlockAdded) contextMap.get(LAST_BLOCK_ADDED)).getBlockHash();
         assertThat(matchingBlockHash, is(notNullValue()));
 
         final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
@@ -277,8 +277,8 @@ public class QueryGlobalStateStepDefinitions {
         assertThat(transferHashes, hasItem(deployResult.getDeployHash()));
     }
 
-    private static <T> T getGlobalDataDataStoredValue() {
-        final GlobalStateData globalStateData = parameterMap.get(GLOBAL_STATE_DATA);
+    private <T> T getGlobalDataDataStoredValue() {
+        final GlobalStateData globalStateData = contextMap.get(GLOBAL_STATE_DATA);
         //noinspection unchecked
         return (T) globalStateData.getStoredValue().getValue();
     }

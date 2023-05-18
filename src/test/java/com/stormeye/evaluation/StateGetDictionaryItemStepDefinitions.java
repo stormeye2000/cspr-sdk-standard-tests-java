@@ -8,8 +8,8 @@ import com.casper.sdk.model.stateroothash.StateRootHashData;
 import com.casper.sdk.model.uref.URef;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.ContextMap;
 import com.stormeye.utils.NctlUtils;
-import com.stormeye.utils.ParameterMap;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import org.slf4j.Logger;
@@ -29,9 +29,9 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class StateGetDictionaryItemStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
-    public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final ContextMap contextMap = ContextMap.getInstance();
+    private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
+    public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
     @Given("that the state_get_dictionary_item RCP method is invoked")
     public void thatTheState_get_dictionary_itemRCPMethodIsInvoked() throws IOException, DynamicInstanceException {
@@ -45,13 +45,13 @@ public class StateGetDictionaryItemStepDefinitions {
                 new URefDictionaryIdentifier(URefSeed.builder().uref(URef.fromString(accountMainPurse)).dictionaryItemKey("main_purse").build())
         );
 
-        parameterMap.put(STATE_GET_DICTIONARY_ITEM, dictionaryData);
+        contextMap.put(STATE_GET_DICTIONARY_ITEM, dictionaryData);
     }
 
     @Then("a valid state_get_dictionary_item_result is returned")
     public void aValidState_get_dictionary_item_resultIsReturned() {
         logger.info("Then a valid state_get_dictionary_item_result is returned");
-        final DictionaryData dictionaryData = parameterMap.get(STATE_GET_DICTIONARY_ITEM);
+        final DictionaryData dictionaryData = contextMap.get(STATE_GET_DICTIONARY_ITEM);
         assertThat(dictionaryData, is(notNullValue()));
     }
 }

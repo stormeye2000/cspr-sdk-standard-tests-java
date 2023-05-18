@@ -3,8 +3,8 @@ package com.stormeye.evaluation;
 import com.casper.sdk.model.validator.ValidatorChangeData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
+import com.stormeye.utils.ContextMap;
 import com.stormeye.utils.CurlUtils;
-import com.stormeye.utils.ParameterMap;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -24,8 +24,8 @@ import static org.hamcrest.core.Is.is;
  */
 public class InfoGetValidatorChangesStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
+    private final ContextMap contextMap = ContextMap.getInstance();
+    private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
 
     @Given("that the info_get_validator_changes method is invoked against a node")
     public void thatTheInfo_get_validator_changesMethodIsInvokedAgainstNode() throws Exception {
@@ -33,27 +33,27 @@ public class InfoGetValidatorChangesStepDefinitions {
         logger.info("Given that the info_get_validator_changes method is invoked against a node");
 
         final ValidatorChangeData validatorsChanges = CasperClientProvider.getInstance().getCasperService().getValidatorsChanges();
-        parameterMap.put(VALIDATORS_CHANGES, validatorsChanges);
+        contextMap.put(VALIDATORS_CHANGES, validatorsChanges);
 
         final JsonNode expectedValidatorChanges = CurlUtils.getValidatorChanges();
         assertThat(expectedValidatorChanges, is(notNullValue()));
-        parameterMap.put(EXPECTED_VALIDATOR_CHANGES, expectedValidatorChanges);
+        contextMap.put(EXPECTED_VALIDATOR_CHANGES, expectedValidatorChanges);
     }
 
     @Then("a valid info_get_validator_changes_result is returned")
     public void aValidInfo_get_validator_changes_resultIsReturned() {
         logger.info("Then a valid info_get_validator_changes_result is returned");
-        final ValidatorChangeData validatorsChanges = parameterMap.get(VALIDATORS_CHANGES);
+        final ValidatorChangeData validatorsChanges = contextMap.get(VALIDATORS_CHANGES);
         assertThat(validatorsChanges, is(notNullValue()));
-        final JsonNode expectedValidatorChanges = parameterMap.get(EXPECTED_VALIDATOR_CHANGES);
+        final JsonNode expectedValidatorChanges = contextMap.get(EXPECTED_VALIDATOR_CHANGES);
         assertThat(validatorsChanges.getChanges().size(), is(expectedValidatorChanges.at("/result/changes").size()));
     }
 
     @And("the info_get_validator_changes_result contains a valid API version")
     public void theInfo_get_validator_changes_resultContainsAValidAPIVersion() {
         logger.info("And the info_get_validator_changes_result contains a valid API version");
-        final ValidatorChangeData validatorsChanges = parameterMap.get(VALIDATORS_CHANGES);
-        final JsonNode expectedValidatorChanges = parameterMap.get(EXPECTED_VALIDATOR_CHANGES);
+        final ValidatorChangeData validatorsChanges = contextMap.get(VALIDATORS_CHANGES);
+        final JsonNode expectedValidatorChanges = contextMap.get(EXPECTED_VALIDATOR_CHANGES);
         assertThat(validatorsChanges.getApiVersion().contains("."), is(true));
         assertThat(validatorsChanges.getApiVersion(), is(expectedValidatorChanges.at("/result/api_version").asText()));
     }

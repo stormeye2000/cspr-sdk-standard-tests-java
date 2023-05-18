@@ -66,7 +66,7 @@ public class PutTransferDeployTest {
         String json = "{\"BlockAdded\":{\"block_hash\":\"f75da3af54e9d6884f158b9c54b292151234fcdbd237954d5095d8aa95b425c9\",\"block\":{\"hash\":\"f75da3af54e9d6884f158b9c54b292151234fcdbd237954d5095d8aa95b425c9\",\"header\":{\"parent_hash\":\"02e177fb0ce77b8c1082d7832847079e8e31e7115dd0a9ac5bfef84804ef96c6\",\"state_root_hash\":\"4fb73294ee06b0768dd127f073b425bb09f4a4b9a9105126191950b3ddccaa3a\",\"body_hash\":\"e459ad9d5b7b6212d85583de647f7b047c048dec211b3a2f177d76e0393430f3\",\"random_bit\":false,\"accumulated_seed\":\"de82487ff4990485f1c0f7c2c708ba3986dc785182739d1b41bd0df91f9f94e6\",\"era_end\":null,\"timestamp\":\"2023-03-21T11:03:25.952Z\",\"era_id\":31,\"height\":348,\"protocol_version\":\"1.0.0\"},\"body\":{\"proposer\":\"01c5d4320de80e6862841b594b9cce59574f3e5a9739f3f1d774b924b6f44ea68b\",\"deploy_hashes\":[],\"transfer_hashes\":[\"143eac3dd8b0a14094ccc4c3a6c4ee8fe848eafaed08f4f8ed52561067c3b015\"]},\"proofs\":[]}}}";
         Object eventRoot = new ObjectMapper().readValue(json, Class.forName("com.casper.sdk.service.impl.event.EventRoot"));
         assertThat(eventRoot, is(notNullValue()));
-        Method getData = eventRoot.getClass().getDeclaredMethod("getData", null);
+        Method getData = eventRoot.getClass().getDeclaredMethod("getData");
         getData.setAccessible(true);
         BlockAdded blockAdded = (BlockAdded) getData.invoke(eventRoot);
         assertThat(blockAdded, is(notNullValue()));
