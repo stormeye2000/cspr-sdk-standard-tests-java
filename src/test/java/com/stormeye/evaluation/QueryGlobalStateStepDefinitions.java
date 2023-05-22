@@ -22,10 +22,7 @@ import com.casper.sdk.model.storedvalue.StoredValueDeployInfo;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.event.EventHandler;
 import com.stormeye.matcher.ExpiringMatcher;
-import com.stormeye.utils.AssetUtils;
-import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ContextMap;
-import com.stormeye.utils.NctlUtils;
+import com.stormeye.utils.*;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
 import io.cucumber.java.After;
@@ -62,6 +59,7 @@ public class QueryGlobalStateStepDefinitions {
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
     private static final EventHandler eventHandler = new EventHandler(EventTarget.POJO);
+    private final Nctl nctl = new Nctl(new TestProperties().getDockerName());
 
     @After
     public static void after() {
@@ -128,7 +126,7 @@ public class QueryGlobalStateStepDefinitions {
     public void theQuery_global_state_resultSStoredValueSFromIsTheUserAccountHash(int userId) {
 
         logger.info("And the query_global_state_result's stored value from is the user-{int} account hash");
-        final String accountHash = NctlUtils.getAccountHash(userId);
+        final String accountHash = nctl.getAccountHash(userId);
         final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
         assertThat(storedValueDeployInfo.getFrom(), is(accountHash));
     }
@@ -152,7 +150,7 @@ public class QueryGlobalStateStepDefinitions {
     public void theQuery_global_state_resultSStoredValueContainsTheTransferSource() {
         logger.info("And the query_global_state_result stored value contains the transfer source uref");
         final DeployInfo storedValueDeployInfo = getGlobalDataDataStoredValue();
-        final String accountMainPurse = NctlUtils.getAccountMainPurse(1);
+        final String accountMainPurse = nctl.getAccountMainPurse(1);
         assertThat(storedValueDeployInfo.getSource().getJsonURef(), is(accountMainPurse));
     }
 

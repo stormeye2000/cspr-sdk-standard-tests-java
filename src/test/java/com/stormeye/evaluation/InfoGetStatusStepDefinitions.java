@@ -4,6 +4,8 @@ import com.casper.sdk.model.status.StatusData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
+import com.stormeye.utils.Nctl;
+import com.stormeye.utils.TestProperties;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -15,8 +17,7 @@ import java.math.BigInteger;
 
 import static com.stormeye.evaluation.StepConstants.EXPECTED_STATUS_DATA;
 import static com.stormeye.evaluation.StepConstants.STATUS_DATA;
-import static com.stormeye.utils.NctlUtils.getJsonValue;
-import static com.stormeye.utils.NctlUtils.getNodeStatus;
+import static com.stormeye.utils.JsonUtils.getJsonValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
@@ -33,11 +34,12 @@ public class InfoGetStatusStepDefinitions {
 
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(InfoGetStatusStepDefinitions.class);
+    private final Nctl nctl = new Nctl(new TestProperties().getDockerName());
 
     @Given("that the info_get_status is invoked against nctl")
     public void thatTheInfo_get_statusIsInvoked() {
 
-        final JsonNode expectedJsonNodeStatus = getNodeStatus(1);
+        final JsonNode expectedJsonNodeStatus = nctl.getNodeStatus(1);
         assertThat(expectedJsonNodeStatus, is(notNullValue()));
         contextMap.put(EXPECTED_STATUS_DATA, expectedJsonNodeStatus);
 

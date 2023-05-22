@@ -9,7 +9,8 @@ import com.casper.sdk.model.uref.URef;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
-import com.stormeye.utils.NctlUtils;
+import com.stormeye.utils.Nctl;
+import com.stormeye.utils.TestProperties;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import org.slf4j.Logger;
@@ -32,12 +33,13 @@ public class StateGetDictionaryItemStepDefinitions {
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final Nctl nctl = new Nctl(new TestProperties().getDockerName());
 
     @Given("that the state_get_dictionary_item RCP method is invoked")
     public void thatTheState_get_dictionary_itemRCPMethodIsInvoked() throws IOException, DynamicInstanceException {
         logger.info("Given that the state_get_dictionary_item RCP method is invoked");
         StateRootHashData stateRootHash = casperService.getStateRootHash();
-        final String accountMainPurse = NctlUtils.getAccountMainPurse(1);
+        final String accountMainPurse = nctl.getAccountMainPurse(1);
 
         // TODO cannot find any working examples of what the parameters should be here
         final DictionaryData dictionaryData = casperService.getStateDictionaryItem(

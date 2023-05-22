@@ -71,6 +71,7 @@ public class BlockStepDefinitions {
     private static EventHandler eraEventHandler;
     private final ObjectMapper mapper = new ObjectMapper();
     private final TestProperties testProperties = new TestProperties();
+    private final Nctl nctl = new Nctl(testProperties.getDockerName());
 
     @BeforeAll
     public static void setUp() {
@@ -164,14 +165,14 @@ public class BlockStepDefinitions {
     @Then("request the latest block via the test node")
     public void requestTheLatestBlockViaTheTestNode() {
         logger.info("Then request the latest block via the test node");
-        contextMap.put("blockDataNode", NctlUtils.getChainBlock(testProperties.getDockerName()));
+        contextMap.put("blockDataNode", nctl.getChainBlock(testProperties.getDockerName()));
     }
 
     @Then("request a block by hash via the test node")
     public void requestABlockByHashViaTheTestNode() {
         logger.info("Then request a block by hash via the test node");
 
-        contextMap.put("blockDataNode", NctlUtils.getChainBlock(contextMap.get("latestBlock")));
+        contextMap.put("blockDataNode", nctl.getChainBlock(contextMap.get("latestBlock")));
     }
 
     @Then("request the returned block from the test node via its hash")
@@ -179,7 +180,7 @@ public class BlockStepDefinitions {
         logger.info("Then request the returned block from the test node via its hash");
 
         //NCTL doesn't have get block via height, so we use the sdk's returned block has
-        contextMap.put("blockDataNode", NctlUtils.getChainBlock(contextMap.get(contextMap.get("blockHashSdk"))));
+        contextMap.put("blockDataNode", nctl.getChainBlock(contextMap.get(contextMap.get("blockHashSdk"))));
     }
 
     @Given("that a test node era switch block is requested")
@@ -187,7 +188,7 @@ public class BlockStepDefinitions {
 
         logger.info("Given that a test node era switch block is requested");
 
-        contextMap.put("nodeEraSwitchBlockResult", NctlUtils.getChainEraInfo());
+        contextMap.put("nodeEraSwitchBlockResult", nctl.getChainEraInfo());
     }
 
     @Then("wait for the the test node era switch block step event")
@@ -201,7 +202,7 @@ public class BlockStepDefinitions {
 
         assertThat(matcher.waitForMatch(5000L), is(true));
 
-        final JsonNode result = NctlUtils.getChainEraInfo();
+        final JsonNode result = nctl.getChainEraInfo();
 
         eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
@@ -218,7 +219,7 @@ public class BlockStepDefinitions {
         logger.info("Then request the block transfer from the test node");
 
         final TransferData transferData = contextMap.get("transferBlockSdk");
-        contextMap.put("transferBlockNode", NctlUtils.getChainBlockTransfers(transferData.getBlockHash()));
+        contextMap.put("transferBlockNode", nctl.getChainBlockTransfers(transferData.getBlockHash()));
     }
 
     @Then("the body of the returned block is equal to the body of the returned test node block")
@@ -524,7 +525,7 @@ public class BlockStepDefinitions {
 
         assertThat(matcher.waitForMatch(5000L), is(true));
 
-        final JsonNode result = NctlUtils.getChainEraInfo();
+        final JsonNode result = nctl.getChainEraInfo();
 
         eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 

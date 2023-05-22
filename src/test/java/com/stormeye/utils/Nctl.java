@@ -3,7 +3,6 @@ package com.stormeye.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NumericNode;
 import com.stormeye.exception.NctlCommandException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +20,22 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
 /**
- * Utility method that call a node using nctl exec commands
+ * A class that executes NCTL shell commands against a node.
  *
  * @author ian@meywood.com
  */
-public class NctlUtils {
+public class Nctl {
 
-    private static final TestProperties testProperties = new TestProperties();
-    private static final Logger logger = LoggerFactory.getLogger(NctlUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(Nctl.class);
 
-    public static String getAccountMainPurse(final int userId) {
+    private final String dockerName;
+
+    public Nctl(final String dockerName) {
+        this.dockerName = dockerName;
+    }
+
+
+    public String getAccountMainPurse(final int userId) {
 
         final JsonNode node = execute("view_user_account.sh", "user=" + userId, s -> {
             try {
@@ -40,40 +45,40 @@ public class NctlUtils {
             }
         });
 
-        final String mainPurse = getJsonValue(node, "/stored_value/Account/main_purse");
+        final String mainPurse = JsonUtils.getJsonValue(node, "/stored_value/Account/main_purse");
         assertThat(mainPurse, is(notNullValue()));
         assertThat(mainPurse, startsWith("uref-"));
         return mainPurse;
     }
 
-    public static String getStateRootHash(final int nodeId) {
+    public String getStateRootHash(final int nodeId) {
         return execute("view_chain_state_root_hash.sh", "node=" + nodeId, s ->
                 s.split("=")[1].trim()
         );
     }
 
-    public static String getAccountHash(final int userId) {
+    public String getAccountHash(final int userId) {
         final JsonNode node = getUserAccount(userId);
-        final String accountHash = getJsonValue(node, "/stored_value/Account/account_hash");
+        final String accountHash = JsonUtils.getJsonValue(node, "/stored_value/Account/account_hash");
         assertThat(accountHash, is(notNullValue()));
         assertThat(accountHash, startsWith("account-hash-"));
         return accountHash;
     }
 
-    public static String getAccountMerkelProof(final int userId) {
+    public String getAccountMerkelProof(final int userId) {
         final JsonNode node = getUserAccount(userId);
-        final String merkleProof = getJsonValue(node, "/merkle_proof");
+        final String merkleProof = JsonUtils.getJsonValue(node, "/merkle_proof");
         assertThat(merkleProof, is(notNullValue()));
         assertThat(merkleProof, startsWith("["));
         return merkleProof;
     }
 
-    public static JsonNode getUserAccount(final int userId) {
-        return execute("view_user_account.sh", "user=" + userId, NctlUtils::removePreamble);
+    public JsonNode getUserAccount(final int userId) {
+        return execute("view_user_account.sh", "user=" + userId, Nctl::removePreamble);
     }
 
-    public static JsonNode getNodeStatus(final int nodeId) {
-        return execute("view_node_status.sh", "node=" + nodeId, NctlUtils::removePreamble);
+    public JsonNode getNodeStatus(final int nodeId) {
+        return execute("view_node_status.sh", "node=" + nodeId, Nctl::removePreamble);
     }
 
     static JsonNode removePreamble(final String response) {
@@ -84,50 +89,38 @@ public class NctlUtils {
         }
     }
 
-    public static <T> T getJsonValue(final JsonNode jsonNode, final String jsonPath) {
-
-        final JsonNode at = jsonNode.at(jsonPath);
-        if (at instanceof NumericNode) {
-            //noinspection unchecked
-            return (T) at.bigIntegerValue();
-        } else {
-            //noinspection unchecked
-            return (T) at.asText();
-        }
-    }
-
-    public static BigInteger geAccountBalance(final String purseUref) {
+    public BigInteger geAccountBalance(final String purseUref) {
         return execute("view_chain_balance.sh", "purse-uref=" + purseUref,
                 s -> new BigInteger(s.split("=")[1].trim())
         );
     }
 
-    public static JsonNode getStateAuctionInfo() {
+    public JsonNode getStateAuctionInfo() {
         return execute("view_chain_auction_info.sh", null);
     }
 
-    public static JsonNode getChainBlock(final String blockHash) {
+    public JsonNode getChainBlock(final String blockHash) {
         return execute("view_chain_block.sh", "block=" + blockHash);
     }
 
-    public static JsonNode getChainEraInfo() {
+    public JsonNode getChainEraInfo() {
         return execute("view_chain_era_info.sh", null);
     }
 
-    public static JsonNode getChainBlockTransfers(final String blockHash) {
+    public JsonNode getChainBlockTransfers(final String blockHash) {
         return execute("view_chain_block_transfers.sh", "block=" + blockHash);
     }
 
-    private static List<String> buildCommand(final String shellCommand, final String params) {
+    private List<String> buildCommand(final String shellCommand, final String params) {
         return List.of("bash", "-c", String.format(
                 "docker exec -t %s /bin/bash -c 'source casper-node/utils/nctl/sh/views/%s %s'",
-                testProperties.getDockerName(),
+                dockerName,
                 shellCommand,
                 params != null ? params : "")
         );
     }
 
-    public static <T> T execute(final String shellCommand, final String params, final Function<String, T> responseFunction) {
+    public <T> T execute(final String shellCommand, final String params, final Function<String, T> responseFunction) {
 
         try {
             final StringBuilder response = new StringBuilder();
@@ -156,11 +149,11 @@ public class NctlUtils {
         }
     }
 
-    public static JsonNode execute(final String shellCommand, final String params) {
+    public JsonNode execute(final String shellCommand, final String params) {
         return execute(shellCommand, params, new JsonNodeResponse());
     }
 
-    private static String replaceAnsiConsoleCodes(final String response) {
+    private String replaceAnsiConsoleCodes(final String response) {
         //remove any console colour ANSI info
         return response.replaceAll("\u001B\\[[;\\d]*m", "");
     }
