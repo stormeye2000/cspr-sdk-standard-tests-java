@@ -9,6 +9,7 @@ import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stormeye.utils.AssetUtils;
+import com.stormeye.utils.TestProperties;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,9 @@ public class PutTransferDeployTest {
     @Test
     void putTransferDeploy() throws Exception {
 
-        final CasperService casperService = CasperService.usingPeer("localhost", 11101);
+        TestProperties testProperties = new TestProperties();
+
+        final CasperService casperService = CasperService.usingPeer(testProperties.getHostname(), testProperties.getRcpPort());
 
         final Ed25519PrivateKey senderKey = new Ed25519PrivateKey();
         final Ed25519PublicKey receiverKey = new Ed25519PublicKey();

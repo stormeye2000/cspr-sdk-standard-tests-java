@@ -1,10 +1,14 @@
 package com.stormeye.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author ian@meywood.com
  */
 public class TestProperties {
 
+    private final Logger logger = LoggerFactory.getLogger(TestProperties.class);
     private final String hostname;
     private final String dockerName;
     private final int rcpPort;
@@ -40,11 +44,13 @@ public class TestProperties {
 
     private String getProperty(final String name, final String defaultValue) {
         final String property = System.getProperty(name);
+        logger.info("{} = {}", name, property);
         return property != null ? property : defaultValue;
     }
 
     private int getIntProperty(final String name, final int defaultValue) {
         final String property = getProperty(name, null);
+        logger.info("{} = {}", name, property);
         return property != null ? Integer.parseInt(property) : defaultValue;
     }
 }
