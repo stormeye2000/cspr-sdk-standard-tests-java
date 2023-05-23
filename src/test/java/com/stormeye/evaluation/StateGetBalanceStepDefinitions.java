@@ -29,7 +29,10 @@ public class StateGetBalanceStepDefinitions {
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetBalanceStepDefinitions.class);
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
-    private final Nctl nctl = new Nctl(new TestProperties().getDockerName());
+    private final TestProperties testProperties = new TestProperties();
+    private final Nctl nctl = new Nctl(testProperties.getDockerName());
+    private final SimpleRcpClient simpleRcpClient = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
+
 
     @Given("that the state_get_balance RPC method is invoked against nclt user-1 purse")
     public void thatTheState_get_balanceRPCMethodIsInvoked() throws Exception {
@@ -38,7 +41,7 @@ public class StateGetBalanceStepDefinitions {
         final String accountMainPurse = nctl.getAccountMainPurse(1);
         final GetBalanceData balance = casperService.getBalance(stateRootHash, URef.fromString(accountMainPurse));
         contextMap.put(STATE_GET_BALANCE_RESULT, balance);
-        final JsonNode json = CurlUtils.getBalance(stateRootHash, accountMainPurse);
+        final JsonNode json = simpleRcpClient.getBalance(stateRootHash, accountMainPurse);
         contextMap.put(EXPECTED_JSON, json);
     }
 

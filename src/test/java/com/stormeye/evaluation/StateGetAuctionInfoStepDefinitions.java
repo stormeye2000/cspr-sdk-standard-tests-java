@@ -13,6 +13,8 @@ import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
+import com.stormeye.utils.SimpleRcpClient;
+import com.stormeye.utils.TestProperties;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -22,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigInteger;
 
 import static com.stormeye.evaluation.StepConstants.*;
-import static com.stormeye.utils.CurlUtils.getAuctionInfoByHash;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -37,7 +38,9 @@ public class StateGetAuctionInfoStepDefinitions {
 
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetAuctionInfoStepDefinitions.class);
-    public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final TestProperties testProperties = new TestProperties();
+    private final SimpleRcpClient simpleRcpClient = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
 
     @Given("that the state_get_auction_info RPC method is invoked by hash block identifier")
     public void thatTheState_get_auction_infoRPCMethodIsInvoked() throws Exception {
@@ -46,11 +49,11 @@ public class StateGetAuctionInfoStepDefinitions {
         final String parentHash = block.getBlock().getHeader().getParentHash().toString();
         contextMap.put("parentHash", parentHash);
 
-        final JsonNode auctionInfoByHash = getAuctionInfoByHash(parentHash).at("/result");
+        final JsonNode auctionInfoByHash = simpleRcpClient.getAuctionInfoByHash(parentHash).at("/result");
         assertThat(auctionInfoByHash, is(notNullValue()));
         contextMap.put(STATE_AUCTION_INFO_JSON, auctionInfoByHash);
 
-        // We have to compare to current block (which may change :) as nctl does not allow to spe which block to use
+        // We have to compare to current block (which may change) as nctl does not allow to spe which block to use
         // The only way to resole this is to use curl and compare against the JSON.
         final AuctionData auctionData = casperService.getStateAuctionInfo(new HashBlockIdentifier(parentHash));
         contextMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
@@ -65,7 +68,7 @@ public class StateGetAuctionInfoStepDefinitions {
         final String parentHash = currentBlock.getBlock().getHeader().getParentHash().toString();
         final JsonBlockData block = casperService.getBlock(new HashBlockIdentifier(parentHash));
 
-        final JsonNode stateAuctionInfoJson = getAuctionInfoByHash(parentHash).at("/result");
+        final JsonNode stateAuctionInfoJson = simpleRcpClient.getAuctionInfoByHash(parentHash).at("/result");
         assertThat(stateAuctionInfoJson, is(notNullValue()));
         contextMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
 

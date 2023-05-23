@@ -4,7 +4,8 @@ import com.casper.sdk.model.validator.ValidatorChangeData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
-import com.stormeye.utils.CurlUtils;
+import com.stormeye.utils.SimpleRcpClient;
+import com.stormeye.utils.TestProperties;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -26,6 +27,8 @@ public class InfoGetValidatorChangesStepDefinitions {
 
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
+    private final TestProperties testProperties = new TestProperties();
+    private final SimpleRcpClient simpleRcpClient  = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
 
     @Given("that the info_get_validator_changes method is invoked against a node")
     public void thatTheInfo_get_validator_changesMethodIsInvokedAgainstNode() throws Exception {
@@ -35,7 +38,7 @@ public class InfoGetValidatorChangesStepDefinitions {
         final ValidatorChangeData validatorsChanges = CasperClientProvider.getInstance().getCasperService().getValidatorsChanges();
         contextMap.put(VALIDATORS_CHANGES, validatorsChanges);
 
-        final JsonNode expectedValidatorChanges = CurlUtils.getValidatorChanges();
+        final JsonNode expectedValidatorChanges = simpleRcpClient.getValidatorChanges();
         assertThat(expectedValidatorChanges, is(notNullValue()));
         contextMap.put(EXPECTED_VALIDATOR_CHANGES, expectedValidatorChanges);
     }
