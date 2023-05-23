@@ -20,7 +20,8 @@ To execute the cucumber tests perform a standard gradle build:
 
 The cucumber test reports will be written to the _reports_ folder off the project root.
 
-The following system parameters (-D) are supported to specify the nctl host and ports. If not provided the defaults are used
+The following system parameters (-D) are supported to specify the nctl host and ports. If not provided the defaults are used:
+
 | Parameter  | Description  | Default   | 
 |---|---|---|
 | cspr.hostname | The host name | _localhost_  | 
