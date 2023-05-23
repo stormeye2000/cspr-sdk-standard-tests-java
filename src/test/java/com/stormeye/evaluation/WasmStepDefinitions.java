@@ -5,7 +5,6 @@ import com.casper.sdk.helper.CasperConstants;
 import com.casper.sdk.helper.CasperDeployHelper;
 import com.casper.sdk.model.clvalue.CLValueString;
 import com.casper.sdk.model.clvalue.CLValueU256;
-import com.casper.sdk.model.clvalue.CLValueU512;
 import com.casper.sdk.model.clvalue.CLValueU8;
 import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.Deploy;
@@ -15,7 +14,7 @@ import com.casper.sdk.model.deploy.executabledeploy.ModuleBytes;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.ContextMap;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
 import io.cucumber.java.en.Given;
@@ -48,16 +47,16 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class WasmStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
-    public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final ContextMap contextMap = ContextMap.getInstance();
+    private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
+    public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
     @Given("that a smart contract {string} is located in the {string} folder")
     public void thatASmartContractIsInTheFolder(String wasmFileName, String contractsFolder) throws IOException {
         logger.info("Give that a smart contract {string} is in the {string} folder");
 
         final String wasmPath = "/" + contractsFolder + "/" + wasmFileName;
-        parameterMap.put(WASM_PATH, wasmPath);
+        contextMap.put(WASM_PATH, wasmPath);
         final URL resource = getClass().getResource(wasmPath);
         //noinspection ConstantConditions
         assertThat(resource.openStream(), is(notNullValue()));
@@ -67,7 +66,7 @@ public class WasmStepDefinitions {
     public void whenTheWasmIsLoadedAsFromTheFileSystem() throws IOException, ValueSerializationException, NoSuchTypeException, GeneralSecurityException {
         logger.info("Then when the wasm is loaded as from the file system");
 
-        final URL resource = getClass().getResource(parameterMap.get(WASM_PATH));
+        final URL resource = getClass().getResource(contextMap.get(WASM_PATH));
 
         //noinspection ConstantConditions
         final byte[] bytes = IOUtils.readBytesFromStream(resource.openStream());
@@ -110,6 +109,6 @@ public class WasmStepDefinitions {
         final DeployResult deployResult = casperService.putDeploy(deploy);
         assertThat(deployResult, is(notNullValue()));
         assertThat(deployResult.getDeployHash(), is(notNullValue()));
-        parameterMap.put(DEPLOY_RESULT, deployResult);
+        contextMap.put(DEPLOY_RESULT, deployResult);
     }
 }

@@ -66,19 +66,18 @@ public class BlockStepDefinitions {
     private static final long invalidHeight = 9999999999L;
     private static final String blockErrorMsg = "block not known";
     private static final String blockErrorCode = "-32001";
-    private static CasperClientException csprClientException;
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
+    private final ContextMap contextMap = ContextMap.getInstance();
     private static EventHandler blockEventHandler;
     private static EventHandler eraEventHandler;
-    private final ExecUtils execUtils = new ExecUtils();
     private final ObjectMapper mapper = new ObjectMapper();
     private final TestProperties testProperties = new TestProperties();
+    private final Nctl nctl = new Nctl(testProperties.getDockerName());
 
     @BeforeAll
     public static void setUp() {
         blockEventHandler = new EventHandler(EventTarget.POJO);
         eraEventHandler = new EventHandler(EventTarget.RAW);
-        parameterMap.clear();
+        ContextMap.getInstance().clear();
     }
 
     @SuppressWarnings("unused")
@@ -88,7 +87,7 @@ public class BlockStepDefinitions {
         eraEventHandler.close();
     }
 
-    private static  CasperService getCasperService() {
+    private static CasperService getCasperService() {
         return CasperClientProvider.getInstance().getCasperService();
     }
 
@@ -98,7 +97,7 @@ public class BlockStepDefinitions {
 
         logger.info("Given that the latest block is requested");
 
-        parameterMap.put("blockDataSdk", getCasperService().getBlock());
+        contextMap.put("blockDataSdk", getCasperService().getBlock());
     }
 
     @Then("a valid error message is returned")
@@ -106,14 +105,14 @@ public class BlockStepDefinitions {
 
         logger.info("Then a valid error message is returned");
 
-        final CasperClientException csprClientException = parameterMap.get("csprClientException");
+        final CasperClientException csprClientException = contextMap.get("csprClientException");
 
         assertThat(csprClientException.getMessage(), is(notNullValue()));
         assertThat(csprClientException.getMessage().toLowerCase().contains(blockErrorMsg), is(true));
         assertThat(csprClientException.getMessage().toLowerCase().contains(blockErrorCode), is(true));
     }
 
-    private PublicKey getPublicKey(final String key){
+    private PublicKey getPublicKey(final String key) {
         try {
             final PublicKey publicKey = new PublicKey();
             publicKey.createPublicKey(key);
@@ -123,7 +122,7 @@ public class BlockStepDefinitions {
         }
     }
 
-    private void validateBlockHash(final Digest hash){
+    private void validateBlockHash(final Digest hash) {
         assertThat(hash, is(notNullValue()));
         assertThat(hash.getDigest(), is(notNullValue()));
         assertThat(hash.getClass(), is(Digest.class));
@@ -135,7 +134,7 @@ public class BlockStepDefinitions {
 
         logger.info("Then the deploy response contains a valid deploy hash");
 
-        final DeployResult deployResult = parameterMap.get("deployResult");
+        final DeployResult deployResult = contextMap.get("deployResult");
         assertThat(deployResult, is(notNullValue()));
         assertThat(deployResult.getDeployHash(), is(notNullValue()));
 
@@ -146,36 +145,34 @@ public class BlockStepDefinitions {
 
         logger.info("Then request the block transfer");
 
-        final DeployResult deployResult = parameterMap.get("deployResult");
+        final DeployResult deployResult = contextMap.get("deployResult");
 
         final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) blockEventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
                         deployResult.getDeployHash(),
-                        blockAddedEvent -> parameterMap.put("matchingBlock", blockAddedEvent.getData())
+                        blockAddedEvent -> contextMap.put("matchingBlock", blockAddedEvent.getData())
                 )
         );
 
         assertThat(matcher.waitForMatch(300), is(true));
         blockEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
-        parameterMap.put("transferBlockSdk", getCasperService().getBlockTransfers());
+        contextMap.put("transferBlockSdk", getCasperService().getBlockTransfers());
 
     }
 
     @Then("request the latest block via the test node")
     public void requestTheLatestBlockViaTheTestNode() {
         logger.info("Then request the latest block via the test node");
-        parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(testProperties.getDockerName())));
+        contextMap.put("blockDataNode", nctl.getChainBlock(testProperties.getDockerName()));
     }
 
     @Then("request a block by hash via the test node")
     public void requestABlockByHashViaTheTestNode() {
         logger.info("Then request a block by hash via the test node");
 
-        parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
-                testProperties.getDockerName(), "block=" + parameterMap.get("latestBlock"))
-        ));
+        contextMap.put("blockDataNode", nctl.getChainBlock(contextMap.get("latestBlock")));
     }
 
     @Then("request the returned block from the test node via its hash")
@@ -183,9 +180,7 @@ public class BlockStepDefinitions {
         logger.info("Then request the returned block from the test node via its hash");
 
         //NCTL doesn't have get block via height, so we use the sdk's returned block has
-        parameterMap.put("blockDataNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK.getCommand(
-                testProperties.getDockerName(), "block=" + parameterMap.get("blockHashSdk")
-        )));
+        contextMap.put("blockDataNode", nctl.getChainBlock(contextMap.get(contextMap.get("blockHashSdk"))));
     }
 
     @Given("that a test node era switch block is requested")
@@ -193,7 +188,7 @@ public class BlockStepDefinitions {
 
         logger.info("Given that a test node era switch block is requested");
 
-        parameterMap.put("nodeEraSwitchBlockResult", execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName())));
+        contextMap.put("nodeEraSwitchBlockResult", nctl.getChainEraInfo());
     }
 
     @Then("wait for the the test node era switch block step event")
@@ -207,15 +202,15 @@ public class BlockStepDefinitions {
 
         assertThat(matcher.waitForMatch(5000L), is(true));
 
-        final JsonNode result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
+        final JsonNode result = nctl.getChainEraInfo();
 
         eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
         assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
         validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
 
-        parameterMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
-        parameterMap.put("nodeEraSwitchData", result);
+        contextMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
+        contextMap.put("nodeEraSwitchData", result);
     }
 
     @Then("request the block transfer from the test node")
@@ -223,9 +218,8 @@ public class BlockStepDefinitions {
 
         logger.info("Then request the block transfer from the test node");
 
-        final TransferData transferData = parameterMap.get("transferBlockSdk");
-        parameterMap.put("transferBlockNode", execUtils.execute(ExecCommands.NCTL_VIEW_CHAIN_BLOCK_TRANSFER.getCommand(
-                testProperties.getDockerName(), "block=" + transferData.getBlockHash())));
+        final TransferData transferData = contextMap.get("transferBlockSdk");
+        contextMap.put("transferBlockNode", nctl.getChainBlockTransfers(transferData.getBlockHash()));
     }
 
     @Then("the body of the returned block is equal to the body of the returned test node block")
@@ -233,21 +227,21 @@ public class BlockStepDefinitions {
 
         logger.info("Then the body of the returned block is equal to the body of the returned test node block");
 
-        final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
+        final JsonBlockData latestBlockSdk = contextMap.get("blockDataSdk");
+        final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
         assertThat(latestBlockSdk.getBlock().getBody(), is(notNullValue()));
 
         assertThat(latestBlockSdk.getBlock().getBody().getProposer().toString().equals(latestBlockNode.get("body").get("proposer").asText()), is(true));
 
-        if (latestBlockNode.get("body").get("deploy_hashes").size() == 0){
+        if (latestBlockNode.get("body").get("deploy_hashes").size() == 0) {
             assertThat(latestBlockSdk.getBlock().getBody().getDeployHashes().isEmpty(), is(true));
         } else {
             latestBlockNode.get("body").findValues("deploy_hashes").forEach(
                     d -> assertThat(latestBlockSdk.getBlock().getBody().getDeployHashes().contains(d.textValue()), is(true))
             );
         }
-        if (latestBlockNode.get("body").get("transfer_hashes").size() == 0){
+        if (latestBlockNode.get("body").get("transfer_hashes").size() == 0) {
             assertThat(latestBlockSdk.getBlock().getBody().getTransferHashes().isEmpty(), is(true));
         } else {
             latestBlockNode.get("body").findValues("transfer_hashes").forEach(
@@ -261,8 +255,8 @@ public class BlockStepDefinitions {
     public void theHashOfTheReturnedBlockIsEqualToTheHashOfTheReturnedTestNodeBlock() throws JsonProcessingException {
         logger.info("And the hash of the returned block is equal to the hash of the returned test node block");
 
-        final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
+        final JsonBlockData latestBlockSdk = contextMap.get("blockDataSdk");
+        final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
         assertThat(latestBlockSdk.getBlock().getHash().toString().equals(latestBlockNode.get("hash").asText()), is(true));
     }
@@ -271,8 +265,8 @@ public class BlockStepDefinitions {
     public void theHeaderOfTheReturnedBlockIsEqualToTheHeaderOfTheReturnedTestNodeBlock() throws JsonProcessingException {
         logger.info("And the header of the returned block is equal to the header of the returned test node block");
 
-        final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
+        final JsonBlockData latestBlockSdk = contextMap.get("blockDataSdk");
+        final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
         assertThat(latestBlockSdk.getBlock().getHeader().getEraId(), is(latestBlockNode.get("header").get("era_id").asLong()));
         assertThat(latestBlockSdk.getBlock().getHeader().getHeight(), is(latestBlockNode.get("header").get("height").asLong()));
@@ -293,8 +287,8 @@ public class BlockStepDefinitions {
 
         logger.info("And the proofs of the returned block are equal to the proofs of the returned test node block");
 
-        final JsonBlockData latestBlockSdk = parameterMap.get("blockDataSdk");
-        final JsonNode latestBlockNode = mapper.readTree(parameterMap.get("blockDataNode").toString());
+        final JsonBlockData latestBlockSdk = contextMap.get("blockDataSdk");
+        final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
         final List<JsonProof> proofsSdk = latestBlockSdk.getBlock().getProofs();
         assertThat(latestBlockNode.get("proofs").findValues("public_key").size() == proofsSdk.size(), is(true));
@@ -313,17 +307,17 @@ public class BlockStepDefinitions {
 
         logger.info("And the switch block hashes of the returned block are equal to the switch block hashes of the returned test node block");
 
-        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final EraInfoData data = contextMap.get("eraSwitchBlockData");
 
-        assertThat(parameterMap.get("nodeEraSwitchBlock").equals(data.getEraSummary().getBlockHash()), is(true));
+        assertThat(contextMap.get("nodeEraSwitchBlock").equals(data.getEraSummary().getBlockHash()), is(true));
     }
 
     @And("the switch block eras of the returned block are equal to the switch block eras of the returned test node block")
     public void theSwitchBlockErasOfTheReturnedBlockAreEqualToTheSwitchBlockErasOfTheReturnedTestNodeBlock() throws JsonProcessingException {
         logger.info("And the switch block eras are equal");
 
-        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
+        final EraInfoData data = contextMap.get("eraSwitchBlockData");
+        final JsonNode node = mapper.readTree(contextMap.get("nodeEraSwitchData").toString());
 
         assertThat(node.get("era_summary").get("era_id").toString().equals(data.getEraSummary().getEraId().toString()), is(true));
     }
@@ -332,8 +326,8 @@ public class BlockStepDefinitions {
     public void theSwitchBlockMerkleProofsOfTheReturnedBlockAreEqualToTheSwitchBlockMerkleProofsOfTheReturnedTestNodeBlock() throws JsonProcessingException {
         logger.info("And the switch block merkle proofs of the returned block are equal to the switch block merkle proofs of the returned test node block");
 
-        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
+        final EraInfoData data = contextMap.get("eraSwitchBlockData");
+        final JsonNode node = mapper.readTree(contextMap.get("nodeEraSwitchData").toString());
 
         assertThat(data.getEraSummary().getMerkleProof(), is(isValidMerkleProof(node.get("era_summary").get("merkle_proof").asText())));
 
@@ -346,8 +340,8 @@ public class BlockStepDefinitions {
 
         logger.info("And the switch block state root hashes of the returned block are equal to the switch block state root hashes of the returned test node block");
 
-        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString());
+        final EraInfoData data = contextMap.get("eraSwitchBlockData");
+        final JsonNode node = mapper.readTree(contextMap.get("nodeEraSwitchData").toString());
 
         assertThat(node.get("era_summary").get("state_root_hash").asText().equals(data.getEraSummary().getStateRootHash()), is(true));
     }
@@ -356,15 +350,15 @@ public class BlockStepDefinitions {
     public void theDelegatorsDataOfTheReturnedBlockIsEqualToTheDelegatorsDataOfTheReturnedTestNodeBlock() throws JsonProcessingException {
         logger.info("And the delegators data of the returned block is equal to the delegators data of the returned test node block");
 
-        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
-        final JsonNode allocations = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString())
+        final EraInfoData data = contextMap.get("eraSwitchBlockData");
+        final JsonNode allocations = mapper.readTree(contextMap.get("nodeEraSwitchData").toString())
                 .get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
 
         final List<SeigniorageAllocation> delegatorsSdk = data.getEraSummary()
                 .getStoredValue().getValue().getSeigniorageAllocations()
                 .stream()
                 .filter(q -> q instanceof Delegator)
-                .map (d -> (Delegator) d)
+                .map(d -> (Delegator) d)
                 .collect(Collectors.toList());
 
         allocations.findValues("Delegator").forEach(
@@ -386,16 +380,16 @@ public class BlockStepDefinitions {
 
         logger.info("And the validators data of the returned block is equal to the validators data of the returned test node block");
 
-        final EraInfoData data = parameterMap.get("eraSwitchBlockData");
+        final EraInfoData data = contextMap.get("eraSwitchBlockData");
 
-        final JsonNode allocations = mapper.readTree(parameterMap.get("nodeEraSwitchData").toString())
+        final JsonNode allocations = mapper.readTree(contextMap.get("nodeEraSwitchData").toString())
                 .get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
 
         final List<SeigniorageAllocation> validatorsSdk = data.getEraSummary()
                 .getStoredValue().getValue().getSeigniorageAllocations()
                 .stream()
                 .filter(q -> q instanceof Validator)
-                .map (d -> (Validator) d)
+                .map(d -> (Validator) d)
                 .collect(Collectors.toList());
 
         allocations.findValues("Validator").forEach(
@@ -421,11 +415,11 @@ public class BlockStepDefinitions {
         senderKey.readPrivateKey(AssetUtils.getUserKeyAsset(1, 1, "secret_key.pem").getFile());
         receiverKey.readPublicKey(AssetUtils.getUserKeyAsset(1, 2, "public_key.pem").getFile());
 
-        parameterMap.put("senderKey", senderKey);
-        parameterMap.put("receiverKey", receiverKey);
-        parameterMap.put("transferAmount", BigInteger.valueOf(2500000000L));
-        parameterMap.put("gasPrice", 1L);
-        parameterMap.put("ttl", Ttl.builder().ttl(30 + "m").build());
+        contextMap.put("senderKey", senderKey);
+        contextMap.put("receiverKey", receiverKey);
+        contextMap.put("transferAmount", BigInteger.valueOf(2500000000L));
+        contextMap.put("gasPrice", 1L);
+        contextMap.put("ttl", Ttl.builder().ttl(30 + "m").build());
     }
 
     @When("the deploy data is put on chain")
@@ -433,20 +427,20 @@ public class BlockStepDefinitions {
         logger.info("When the deploy data is put on chain");
 
         final Deploy deploy = CasperTransferHelper.buildTransferDeploy(
-                parameterMap.get("senderKey"),
-                PublicKey.fromAbstractPublicKey(parameterMap.get("receiverKey")),
-                parameterMap.get("transferAmount"),
+                contextMap.get("senderKey"),
+                PublicKey.fromAbstractPublicKey(contextMap.get("receiverKey")),
+                contextMap.get("transferAmount"),
                 "casper-net-1",
                 Math.abs(new Random().nextLong()),
                 BigInteger.valueOf(100000000L),
-                parameterMap.get("gasPrice"),
-                parameterMap.get("ttl"),
+                contextMap.get("gasPrice"),
+                contextMap.get("ttl"),
                 new Date(),
                 new ArrayList<>());
 
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
-        parameterMap.put("deployResult", casperService.putDeploy(deploy));
+        contextMap.put("deployResult", casperService.putDeploy(deploy));
     }
 
     @And("the returned block contains the transfer hash returned from the test node block")
@@ -454,12 +448,12 @@ public class BlockStepDefinitions {
 
         logger.info("And the returned block contains the transfer hash returned from the test node block");
 
-        final DeployResult deployResult = parameterMap.get("deployResult");
+        final DeployResult deployResult = contextMap.get("deployResult");
         final List<String> transferHashes = new ArrayList<>();
 
-        mapper.readTree(parameterMap.get("transferBlockNode").toString()).get("body").get("transfer_hashes").forEach(
+        mapper.readTree(contextMap.get("transferBlockNode").toString()).get("body").get("transfer_hashes").forEach(
                 t -> {
-                    if (t.textValue().equals(deployResult.getDeployHash())){
+                    if (t.textValue().equals(deployResult.getDeployHash())) {
                         transferHashes.add(t.textValue());
                     }
                 }
@@ -473,31 +467,31 @@ public class BlockStepDefinitions {
 
         logger.info("Given that the latest block is requested via the sdk");
 
-        parameterMap.put("blockDataSdk", getCasperService().getBlock());
+        contextMap.put("blockDataSdk", getCasperService().getBlock());
     }
 
     @Given("that a block is returned by hash via the sdk")
     public void thatABlockIsReturnedByHashViaTheSdk() {
         logger.info("Given that a block is returned by hash via the sdk");
 
-        parameterMap.put("latestBlock", getCasperService().getBlock().getBlock().getHash().toString());
-        parameterMap.put("blockDataSdk", getCasperService().getBlock(new HashBlockIdentifier(parameterMap.get("latestBlock"))));
+        contextMap.put("latestBlock", getCasperService().getBlock().getBlock().getHash().toString());
+        contextMap.put("blockDataSdk", getCasperService().getBlock(new HashBlockIdentifier(contextMap.get("latestBlock"))));
     }
 
     @Given("that a block is returned by height {int} via the sdk")
     public void thatABlockIsReturnedByHeightViaTheSdk(int height) {
         logger.info("Given that a block is returned by height [{}] via the sdk", height);
 
-        parameterMap.put("blockDataSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)));
-        parameterMap.put("blockHashSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)).getBlock().getHash().toString());
+        contextMap.put("blockDataSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)));
+        contextMap.put("blockHashSdk", getCasperService().getBlock(new HeightBlockIdentifier(height)).getBlock().getHash().toString());
     }
 
     @Given("that an invalid block hash is requested via the sdk")
     public void thatAnInvalidBlockHashIsRequestedViaTheSdk() {
         logger.info("Given that an invalid block hash is requested via the sdk");
 
-        parameterMap.put("csprClientException",
-                csprClientException = assertThrows(CasperClientException.class,
+        contextMap.put("csprClientException",
+                assertThrows(CasperClientException.class,
                         () -> getCasperService().getBlock(new HashBlockIdentifier(invalidBlockHash)))
         );
     }
@@ -507,8 +501,8 @@ public class BlockStepDefinitions {
 
         logger.info("Given that an invalid block height is requested");
 
-        parameterMap.put("csprClientException",
-                csprClientException = assertThrows(CasperClientException.class,
+        contextMap.put("csprClientException",
+                assertThrows(CasperClientException.class,
                         () -> getCasperService().getBlock(new HeightBlockIdentifier(invalidHeight)))
         );
     }
@@ -517,7 +511,7 @@ public class BlockStepDefinitions {
     public void requestTheCorrespondingEraSwitchBlockViaTheSdk() {
         logger.info("Then request the corresponding era switch block via the sdk");
 
-        parameterMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(parameterMap.get("nodeEraSwitchBlock"))));
+        contextMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(contextMap.get("nodeEraSwitchBlock"))));
     }
 
     @Given("that a step event is received")
@@ -531,14 +525,14 @@ public class BlockStepDefinitions {
 
         assertThat(matcher.waitForMatch(5000L), is(true));
 
-        final JsonNode result = execUtils.execute(ExecCommands.NCTL_VIEW_ERA_INFO.getCommand(testProperties.getDockerName()));
+        final JsonNode result = nctl.getChainEraInfo();
 
         eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
         assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
         validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
 
-        parameterMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
-        parameterMap.put("nodeEraSwitchData", result);
+        contextMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
+        contextMap.put("nodeEraSwitchData", result);
     }
 }

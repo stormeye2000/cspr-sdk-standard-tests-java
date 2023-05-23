@@ -3,7 +3,7 @@ package com.stormeye.evaluation;
 import com.casper.sdk.model.peer.PeerData;
 import com.casper.sdk.model.peer.PeerEntry;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.ContextMap;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -25,15 +25,15 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class InfoGetPeersStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static final Logger logger = LoggerFactory.getLogger(InfoGetPeersStepDefinitions.class);
+    private final ContextMap contextMap = ContextMap.getInstance();
+    private final Logger logger = LoggerFactory.getLogger(InfoGetPeersStepDefinitions.class);
 
 
     @Given("that the info_get_peers RPC method is invoked against a node")
     public void thatTheInfo_get_peersRPCMethodIsInvokedAgainstANode() {
         logger.info("Given that the info_get_peers RPC method is invoked against a node");
         final PeerData peerData = CasperClientProvider.getInstance().getCasperService().getPeerData();
-        parameterMap.put(PEER_DATA, peerData);
+        contextMap.put(PEER_DATA, peerData);
     }
 
     @Then("the node returns an info_get_peers_result")
@@ -67,8 +67,7 @@ public class InfoGetPeersStepDefinitions {
         return peerEntry.getAddress().endsWith(":" + port) && peerEntry.getNodeId().startsWith("tls:");
     }
 
-    private static PeerData getPeerData() {
-        return parameterMap.get(PEER_DATA);
+    private PeerData getPeerData() {
+        return contextMap.get(PEER_DATA);
     }
-
 }

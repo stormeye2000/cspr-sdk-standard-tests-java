@@ -3,8 +3,9 @@ package com.stormeye.evaluation;
 import com.casper.sdk.model.stateroothash.StateRootHashData;
 import com.casper.sdk.service.CasperService;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.NctlUtils;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.ContextMap;
+import com.stormeye.utils.Nctl;
+import com.stormeye.utils.TestProperties;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import org.slf4j.Logger;
@@ -22,24 +23,25 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class GetStateRootHashStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
-    private static final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
+    private final ContextMap contextMap = ContextMap.getInstance();
+    public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final Logger logger = LoggerFactory.getLogger(QueryGlobalStateStepDefinitions.class);
+    private final Nctl nctl = new Nctl(new TestProperties().getDockerName());
 
     @Given("that the chain_get_state_root_hash RCP method is invoked against nctl")
     public void thatTheChain_get_state_root_hashRCPMethodIsInvoked() {
 
         logger.info("Given that the chain_get_state_root_hash RCP method is invoked");
-        parameterMap.put(STATE_ROOT_HASH, casperService.getStateRootHash());
+        contextMap.put(STATE_ROOT_HASH, casperService.getStateRootHash());
     }
 
     @Then("a valid chain_get_state_root_hash_result is returned")
     public void aValidChain_get_state_root_hash_resultIsReturned() {
         logger.info("Then a valid chain_get_state_root_hash_result is returned");
-        final StateRootHashData stateRootHashData = parameterMap.get(STATE_ROOT_HASH);
+        final StateRootHashData stateRootHashData = contextMap.get(STATE_ROOT_HASH);
         assertThat(stateRootHashData, is(notNullValue()));
 
-        final String expectedStateRootHash = NctlUtils.getStateRootHash(1);
+        final String expectedStateRootHash = nctl.getStateRootHash(1);
         assertThat(stateRootHashData.getStateRootHash(), is(expectedStateRootHash));
     }
 }

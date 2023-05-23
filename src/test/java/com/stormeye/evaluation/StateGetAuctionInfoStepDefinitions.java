@@ -12,7 +12,9 @@ import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.service.CasperService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.ContextMap;
+import com.stormeye.utils.SimpleRcpClient;
+import com.stormeye.utils.TestProperties;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -22,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigInteger;
 
 import static com.stormeye.evaluation.StepConstants.*;
-import static com.stormeye.utils.CurlUtils.getAuctionInfoByHash;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
@@ -35,25 +36,27 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class StateGetAuctionInfoStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
-    private static final Logger logger = LoggerFactory.getLogger(StateGetAuctionInfoStepDefinitions.class);
-    public static final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final ContextMap contextMap = ContextMap.getInstance();
+    private final Logger logger = LoggerFactory.getLogger(StateGetAuctionInfoStepDefinitions.class);
+    private final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private final TestProperties testProperties = new TestProperties();
+    private final SimpleRcpClient simpleRcpClient = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
 
     @Given("that the state_get_auction_info RPC method is invoked by hash block identifier")
     public void thatTheState_get_auction_infoRPCMethodIsInvoked() throws Exception {
         logger.info("Given that the state_get_auction_info RPC method is invoked by hash block identifier");
         final JsonBlockData block = casperService.getBlock();
         final String parentHash = block.getBlock().getHeader().getParentHash().toString();
-        parameterMap.put("parentHash", parentHash);
+        contextMap.put("parentHash", parentHash);
 
-        final JsonNode auctionInfoByHash = getAuctionInfoByHash(parentHash).at("/result");
+        final JsonNode auctionInfoByHash = simpleRcpClient.getAuctionInfoByHash(parentHash).at("/result");
         assertThat(auctionInfoByHash, is(notNullValue()));
-        parameterMap.put(STATE_AUCTION_INFO_JSON, auctionInfoByHash);
+        contextMap.put(STATE_AUCTION_INFO_JSON, auctionInfoByHash);
 
-        // We have to compare to current block (which may change :) as nctl does not allow to spe which block to use
+        // We have to compare to current block (which may change) as nctl does not allow to spe which block to use
         // The only way to resole this is to use curl and compare against the JSON.
         final AuctionData auctionData = casperService.getStateAuctionInfo(new HashBlockIdentifier(parentHash));
-        parameterMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
+        contextMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
     }
 
 
@@ -65,50 +68,50 @@ public class StateGetAuctionInfoStepDefinitions {
         final String parentHash = currentBlock.getBlock().getHeader().getParentHash().toString();
         final JsonBlockData block = casperService.getBlock(new HashBlockIdentifier(parentHash));
 
-        final JsonNode stateAuctionInfoJson = getAuctionInfoByHash(parentHash).at("/result");
+        final JsonNode stateAuctionInfoJson = simpleRcpClient.getAuctionInfoByHash(parentHash).at("/result");
         assertThat(stateAuctionInfoJson, is(notNullValue()));
-        parameterMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
+        contextMap.put(STATE_AUCTION_INFO_JSON, stateAuctionInfoJson);
 
         final AuctionData auctionData = casperService.getStateAuctionInfo(new HeightBlockIdentifier(block.getBlock().getHeader().getHeight()));
-        parameterMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
+        contextMap.put(STATE_GET_AUCTION_INFO_RESULT, auctionData);
     }
 
     @Then("a valid state_get_auction_info_result is returned")
     public void aValidState_get_auction_info_resultIsReturned() {
         logger.info("Given a valid state_get_auction_info_result is returned");
-        final AuctionData auctionData = parameterMap.get(STATE_GET_AUCTION_INFO_RESULT);
+        final AuctionData auctionData = contextMap.get(STATE_GET_AUCTION_INFO_RESULT);
         assertThat(auctionData, is(notNullValue()));
     }
 
     @And("the state_get_auction_info_result has and api version of {string}")
     public void theState_get_auction_info_resultHasAndApiVersionOf(String apiVersion) {
         logger.info("And the state_get_auction_info_result has and api version of {}", apiVersion);
-        final AuctionData auctionData = parameterMap.get(STATE_GET_AUCTION_INFO_RESULT);
+        final AuctionData auctionData = contextMap.get(STATE_GET_AUCTION_INFO_RESULT);
         assertThat(auctionData.getApiVersion(), is(apiVersion));
     }
 
     @And("the state_get_auction_info_result action_state has a valid state root hash")
     public void theState_get_auction_info_resultAction_stateHasAValidStateRootHash() {
-        final AuctionData auctionData = parameterMap.get(STATE_GET_AUCTION_INFO_RESULT);
-        final JsonNode jsonNode = parameterMap.get(STATE_AUCTION_INFO_JSON);
+        final AuctionData auctionData = contextMap.get(STATE_GET_AUCTION_INFO_RESULT);
+        final JsonNode jsonNode = contextMap.get(STATE_AUCTION_INFO_JSON);
         final String expectedStateRootHash = jsonNode.at("/auction_state/state_root_hash").asText();
         assertThat(auctionData.getAuctionState().getStateRootHash(), is(expectedStateRootHash));
     }
 
     @And("the state_get_auction_info_result action_state has a valid height")
     public void theState_get_auction_info_resultAction_stateHasAValidHeight() {
-        final AuctionData auctionData = parameterMap.get(STATE_GET_AUCTION_INFO_RESULT);
-        final JsonNode jsonNode = parameterMap.get(STATE_AUCTION_INFO_JSON);
+        final AuctionData auctionData = contextMap.get(STATE_GET_AUCTION_INFO_RESULT);
+        final JsonNode jsonNode = contextMap.get(STATE_AUCTION_INFO_JSON);
         final Long expectedBlockHeight = jsonNode.at("/auction_state/block_height").asLong();
         assertThat(auctionData.getAuctionState().getHeight(), is(expectedBlockHeight));
     }
 
     @And("the state_get_auction_info_result action_state has valid bids")
     public void theState_get_auction_info_resultAction_stateHasValidBids() {
-        final AuctionData auctionData = parameterMap.get(STATE_GET_AUCTION_INFO_RESULT);
+        final AuctionData auctionData = contextMap.get(STATE_GET_AUCTION_INFO_RESULT);
         assertThat(auctionData.getAuctionState().getBids().size(), is(greaterThan(0)));
 
-        final JsonNode jsonNode = parameterMap.get(STATE_AUCTION_INFO_JSON);
+        final JsonNode jsonNode = contextMap.get(STATE_AUCTION_INFO_JSON);
         final JsonNode bidsJson = jsonNode.at("/auction_state/bids");
         assertThat(auctionData.getAuctionState().getBids().size(), is(bidsJson.size()));
 
@@ -145,11 +148,11 @@ public class StateGetAuctionInfoStepDefinitions {
 
     @And("the state_get_auction_info_result action_state has valid era validators")
     public void theState_get_auction_info_resultAction_stateHasValidEraValidators() {
-        final AuctionData auctionData = parameterMap.get(STATE_GET_AUCTION_INFO_RESULT);
+        final AuctionData auctionData = contextMap.get(STATE_GET_AUCTION_INFO_RESULT);
 
         assertThat(auctionData.getAuctionState().getEraValidators().size(), is(greaterThan(0)));
 
-        final JsonNode jsonNode = parameterMap.get(STATE_AUCTION_INFO_JSON);
+        final JsonNode jsonNode = contextMap.get(STATE_AUCTION_INFO_JSON);
         final JsonNode eraValidatorsJson = jsonNode.at("/auction_state/era_validators");
         assertThat(eraValidatorsJson.size(), is(greaterThan(0)));
 
@@ -168,9 +171,9 @@ public class StateGetAuctionInfoStepDefinitions {
     @Given("that the state_get_auction_info RPC method is invoked by an invalid block hash identifier")
     public void thatTheState_get_auction_infoRPCMethodIsInvokedByAnInvalidHeightBlockIdentifier() {
         try {
-             casperService.getStateAuctionInfo(new HashBlockIdentifier("9608b4b7029a18ae35373eab879f523850a1b1fd43a3e6da774826a343af4ad2"));
+            casperService.getStateAuctionInfo(new HashBlockIdentifier("9608b4b7029a18ae35373eab879f523850a1b1fd43a3e6da774826a343af4ad2"));
         } catch (CasperClientException e) {
-            parameterMap.put( CLIENT_EXCEPTION, e);
+            contextMap.put(CLIENT_EXCEPTION, e);
         }
     }
 }
