@@ -43,7 +43,6 @@ Feature: Blocks Integration Tests
     Given that an invalid block height is requested via the sdk
     Then a valid error message is returned
 
-
     Given that a step event is received
     Then request the corresponding era switch block via the sdk
     And the switch block hashes of the returned block are equal to the switch block hashes of the returned test node block

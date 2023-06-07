@@ -165,7 +165,7 @@ public class BlockStepDefinitions {
     @Then("request the latest block via the test node")
     public void requestTheLatestBlockViaTheTestNode() {
         logger.info("Then request the latest block via the test node");
-        contextMap.put("blockDataNode", nctl.getChainBlock(testProperties.getDockerName()));
+        contextMap.put("blockDataNode", nctl.getChainBlock(""));
     }
 
     @Then("request a block by hash via the test node")
@@ -180,7 +180,7 @@ public class BlockStepDefinitions {
         logger.info("Then request the returned block from the test node via its hash");
 
         //NCTL doesn't have get block via height, so we use the sdk's returned block has
-        contextMap.put("blockDataNode", nctl.getChainBlock(contextMap.get(contextMap.get("blockHashSdk"))));
+        contextMap.put("blockDataNode", nctl.getChainBlock(contextMap.get("blockHashSdk")));
     }
 
     @Given("that a test node era switch block is requested")
