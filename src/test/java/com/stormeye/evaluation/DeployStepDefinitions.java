@@ -11,6 +11,7 @@ import com.casper.sdk.model.common.Ttl;
 import com.casper.sdk.model.deploy.*;
 import com.casper.sdk.model.deploy.executabledeploy.ExecutableDeployItem;
 import com.casper.sdk.model.event.Event;
+import com.casper.sdk.model.event.EventTarget;
 import com.casper.sdk.model.event.EventType;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
 import com.casper.sdk.model.event.deployaccepted.DeployAccepted;
@@ -21,7 +22,7 @@ import com.stormeye.matcher.DeployMatchers;
 import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ParameterMap;
+import com.stormeye.utils.ContextMap;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.Ed25519PublicKey;
 import io.cucumber.java.AfterAll;
@@ -38,9 +39,8 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.util.*;
 
-import static com.stormeye.evaluation.BlockAddedMatchers.hasTransferHashWithin;
 import static com.stormeye.evaluation.StepConstants.*;
-import static com.stormeye.evaluation.StepConstants.SENDER_KEY;
+import static com.stormeye.matcher.BlockAddedMatchers.hasTransferHashWithin;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
@@ -54,14 +54,14 @@ import static org.hamcrest.core.IsNull.notNullValue;
  */
 public class DeployStepDefinitions {
 
-    private static final ParameterMap parameterMap = ParameterMap.getInstance();
+    private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(DeployStepDefinitions.class);
     private static EventHandler eventHandler;
 
     @BeforeAll
     public static void setUp() {
-        parameterMap.clear();
-        eventHandler = new EventHandler();
+        ContextMap.getInstance().clear();
+        eventHandler = new EventHandler(EventTarget.POJO);
     }
 
     @SuppressWarnings("unused")
@@ -81,8 +81,8 @@ public class DeployStepDefinitions {
         senderKey.readPrivateKey(AssetUtils.getUserKeyAsset(1, senderId, SECRET_KEY_PEM).getFile());
         receiverKey.readPublicKey(AssetUtils.getUserKeyAsset(1, receiverId, PUBLIC_KEY_PEM).getFile());
 
-        parameterMap.put(SENDER_KEY, senderKey);
-        parameterMap.put(RECEIVER_KEY, receiverKey);
+        contextMap.put(SENDER_KEY, senderKey);
+        contextMap.put(RECEIVER_KEY, receiverKey);
     }
 
     @And("the deploy is given a ttl of {int}m")
@@ -90,7 +90,7 @@ public class DeployStepDefinitions {
 
         logger.info("And the deploy has a ttl of {}m", ttlMinutes);
 
-        parameterMap.put(TTL, Ttl.builder().ttl(ttlMinutes + "m").build());
+        contextMap.put(TTL, Ttl.builder().ttl(ttlMinutes + "m").build());
     }
 
     @And("the transfer amount is {long}")
@@ -98,7 +98,7 @@ public class DeployStepDefinitions {
 
         logger.info("And the transfer amount is {}", amount);
 
-        parameterMap.put(TRANSFER_AMOUNT, BigInteger.valueOf(amount));
+        contextMap.put(TRANSFER_AMOUNT, BigInteger.valueOf(amount));
     }
 
     @And("the transfer gas price is {long}")
@@ -106,7 +106,7 @@ public class DeployStepDefinitions {
 
         logger.info("And the transfer gas price is {}", price);
 
-        parameterMap.put(GAS_PRICE, price);
+        contextMap.put(GAS_PRICE, price);
     }
 
     @When("the deploy is put on chain {string}")
@@ -115,25 +115,25 @@ public class DeployStepDefinitions {
         logger.info("When the deploy is put on chain {}", chainName);
 
         final Date timestamp = new Date();
-        parameterMap.put(DEPLOY_TIMESTAMP, timestamp);
+        contextMap.put(DEPLOY_TIMESTAMP, timestamp);
 
         final Deploy deploy = CasperTransferHelper.buildTransferDeploy(
-                parameterMap.get(SENDER_KEY),
-                PublicKey.fromAbstractPublicKey(parameterMap.get(RECEIVER_KEY)),
-                parameterMap.get(TRANSFER_AMOUNT),
+                contextMap.get(SENDER_KEY),
+                PublicKey.fromAbstractPublicKey(contextMap.get(RECEIVER_KEY)),
+                contextMap.get(TRANSFER_AMOUNT),
                 chainName,
                 Math.abs(new Random().nextLong()),
                 BigInteger.valueOf(100000000L),
-                parameterMap.get(GAS_PRICE),
-                parameterMap.get(TTL),
+                contextMap.get(GAS_PRICE),
+                contextMap.get(TTL),
                 timestamp,
                 new ArrayList<>());
 
-        parameterMap.put(PUT_DEPLOY, deploy);
+        contextMap.put(PUT_DEPLOY, deploy);
 
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
 
-        parameterMap.put(DEPLOY_RESULT, casperService.putDeploy(deploy));
+        contextMap.put(DEPLOY_RESULT, casperService.putDeploy(deploy));
     }
 
 
@@ -142,7 +142,7 @@ public class DeployStepDefinitions {
 
         logger.info("Then the deploy response contains a valid deploy hash of length {} and an API version {}", hashLength, apiVersion);
 
-        DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
         assertThat(deployResult, is(notNullValue()));
         assertThat(deployResult.getDeployHash(), is(notNullValue()));
         assertThat(deployResult.getDeployHash().length(), is((hashLength)));
@@ -156,13 +156,13 @@ public class DeployStepDefinitions {
 
         logger.info("Then wait for a block added event with a timout of {} seconds", timeout);
 
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
 
         final ExpiringMatcher<Event<BlockAdded>> matcher = (ExpiringMatcher<Event<BlockAdded>>) eventHandler.addEventMatcher(
                 EventType.MAIN,
                 hasTransferHashWithin(
                         deployResult.getDeployHash(),
-                        blockAddedEvent -> parameterMap.put(LAST_BLOCK_ADDED, blockAddedEvent.getData())
+                        blockAddedEvent -> contextMap.put(LAST_BLOCK_ADDED, blockAddedEvent.getData())
                 )
         );
 
@@ -170,7 +170,7 @@ public class DeployStepDefinitions {
 
         eventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
-        final Digest matchingBlockHash = ((BlockAdded) parameterMap.get(LAST_BLOCK_ADDED)).getBlockHash();
+        final Digest matchingBlockHash = ((BlockAdded) contextMap.get(LAST_BLOCK_ADDED)).getBlockHash();
         assertThat(matchingBlockHash, is(notNullValue()));
 
         final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
@@ -182,14 +182,14 @@ public class DeployStepDefinitions {
     @And("the Deploy is accepted")
     public void theDeployIsAccepted() throws Exception {
 
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
         logger.info("the Deploy {} is accepted", deployResult.getDeployHash());
 
         final ExpiringMatcher<Event<DeployAccepted>> matcher = (ExpiringMatcher<Event<DeployAccepted>>) eventHandler.addEventMatcher(
                 EventType.DEPLOYS,
                 DeployMatchers.theDeployIsAccepted(
                         deployResult.getDeployHash(),
-                        event -> parameterMap.put(DEPLOY_ACCEPTED, event.getData())
+                        event -> contextMap.put(DEPLOY_ACCEPTED, event.getData())
                 )
         );
 
@@ -203,18 +203,18 @@ public class DeployStepDefinitions {
 
         logger.info("Given that a Transfer has been deployed");
 
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
         assertThat(deployResult, is(notNullValue()));
     }
 
     @When("a deploy is requested via the info_get_deploy RCP method")
     public void whenTheDeployIsRequestedAValidDeployDataIsReturned() {
 
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
         final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
         final DeployData deploy = casperService.getDeploy(deployResult.getDeployHash());
         assertThat(deploy, is(notNullValue()));
-        parameterMap.put(INFO_GET_DEPLOY, deploy);
+        contextMap.put(INFO_GET_DEPLOY, deploy);
         assertThat(deploy.getExecutionResults().size(), is(greaterThan(0)));
     }
 
@@ -250,7 +250,7 @@ public class DeployStepDefinitions {
     @And("the deploy execution result has {string} block hash")
     public void theDeployExecutionResultHasBlockHash(final String blockName) {
 
-        final BlockAdded blockAdded = parameterMap.get(blockName);
+        final BlockAdded blockAdded = contextMap.get(blockName);
         assertThat(
                 getDeployData().getExecutionResults().get(0).getBlockHash(),
                 is(blockAdded.getBlockHash().toString())
@@ -317,7 +317,7 @@ public class DeployStepDefinitions {
         assertThat(getDeployData().getDeploy().getHeader().getBodyHash().isValid(), is(true));
 
         // Compare body hash of put deploy with
-        final Deploy deploy = parameterMap.get(PUT_DEPLOY);
+        final Deploy deploy = contextMap.get(PUT_DEPLOY);
         assertThat(deploy.getHeader().getBodyHash(), is(deploy.getHeader().getBodyHash()));
     }
 
@@ -333,18 +333,18 @@ public class DeployStepDefinitions {
         assertThat(getDeployData().getDeploy().getHash().isValid(), is(true));
 
         // Obtain the hash of the put deploy and compare to one obtained with info_get_deploy
-        final DeployResult deployResult = parameterMap.get(DEPLOY_RESULT);
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
         assertThat(getDeployData().getDeploy().getHash().toString(), is(deployResult.getDeployHash()));
     }
 
     @And("the deploy has a valid timestamp")
     public void theDeployHasAValidTimestamp() {
-        Date timestamp = parameterMap.get(DEPLOY_TIMESTAMP);
+        Date timestamp = contextMap.get(DEPLOY_TIMESTAMP);
         assertThat(getDeployData().getDeploy().getHeader().getTimeStamp(), is(timestamp));
     }
 
-    private static DeployData getDeployData() {
-        return parameterMap.get(INFO_GET_DEPLOY);
+    private  DeployData getDeployData() {
+        return contextMap.get(INFO_GET_DEPLOY);
     }
 
     private NamedArg<?> getNamedArg(final List<NamedArg<?>> namedArgs, final String argName) {

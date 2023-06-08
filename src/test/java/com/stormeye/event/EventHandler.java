@@ -24,11 +24,10 @@ public class EventHandler {
     private final MatcherMap matcherMap = new MatcherMap();
     private final List<AutoCloseable> sseSources = new ArrayList<>();
 
-    public EventHandler() {
-
-        consume(EventType.DEPLOYS);
-        consume(EventType.MAIN);
-        consume(EventType.SIGS);
+    public EventHandler(final EventTarget eventTarget) {
+        consume(EventType.DEPLOYS, eventTarget);
+        consume(EventType.MAIN, eventTarget);
+        consume(EventType.SIGS, eventTarget);
     }
 
     public void close() {
@@ -42,10 +41,10 @@ public class EventHandler {
         }
     }
 
-    private void consume(final EventType eventType) {
+    private void consume(final EventType eventType, final EventTarget eventTarget) {
 
         sseSources.add(
-                CasperClientProvider.getInstance().getEventService().consumeEvents(eventType, EventTarget.POJO, null, event -> {
+                CasperClientProvider.getInstance().getEventService().consumeEvents(eventType, eventTarget, null, event -> {
                     logger.info("Got {} event {}", eventType, event);
                     handleMatchers(event);
                 }, throwable -> logger.error("Error processing SSE event", throwable))

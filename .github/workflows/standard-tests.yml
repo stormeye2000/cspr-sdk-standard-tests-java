@@ -6,14 +6,15 @@
 #   - download the test platform
 #   - download the project artifacts and move to the required directories
 #   - run the cucumber tests via gradle
+#   - publish the xml test reports to the actions page
 
 
-name: CSPR NCTL Java SDK Standard Tests
+name: CSPR Java SDK Standard Tests
 on:
   workflow_dispatch:
 jobs:
   build:
-    name: Setting Up NCTL
+    name: Java SDK Standard Tests
     runs-on: ubuntu-latest
     services:
       storm-nctl:
@@ -112,4 +113,14 @@ jobs:
           rm -rf libs
           mkdir libs
           mv *.jar libs                   
-          ./gradlew clean cucumberCli
+          ./gradlew clean cucumberCli -DrootLogger.level=OFF
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: 'reports/*.xml'
+          detailed_summary: true
+          include_passed: true
+          summary: true
+

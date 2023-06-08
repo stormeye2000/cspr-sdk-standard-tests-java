@@ -1,10 +1,8 @@
-package com.stormeye.evaluation;
+package com.stormeye.matcher;
 
 import com.casper.sdk.model.event.DataType;
 import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.blockadded.BlockAdded;
-import com.stormeye.matcher.ExpiringMatcher;
-import com.stormeye.matcher.OnMatch;
 import org.hamcrest.CustomMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
