@@ -19,6 +19,8 @@ import static com.stormeye.evaluation.StepConstants.EXPECTED_STATUS_DATA;
 import static com.stormeye.evaluation.StepConstants.STATUS_DATA;
 import static com.stormeye.utils.JsonUtils.getJsonValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -118,7 +120,16 @@ public class InfoGetStatusStepDefinitions {
         final StatusData statusData = contextMap.get(STATUS_DATA);
         final String expectedUptime = getJsonValue(contextMap.get(EXPECTED_STATUS_DATA), "/uptime");
         assertThat(expectedUptime, is(notNullValue()));
-        assertThat(statusData.getUptime(), containsString("h "));
+
+        final int expectedSeconds = this.getTimeInSecondsFromUptime(expectedUptime);
+        final int actualSeconds = this.getTimeInSecondsFromUptime(statusData.getUptime());
+
+        assertThat(expectedSeconds, is(greaterThan(10)));
+        assertThat(actualSeconds, is(greaterThan(10)));
+
+        // assert there are less than 5seconds between both times
+        assertThat(actualSeconds - expectedSeconds, is(lessThanOrEqualTo(5)));
+
         assertThat(statusData.getUptime(), containsString("m "));
         assertThat(statusData.getUptime(), containsString("s "));
         assertThat(statusData.getUptime(), endsWith("ms"));
@@ -133,5 +144,29 @@ public class InfoGetStatusStepDefinitions {
         assertThat(statusData.getPeers().get(0).getAddress(), is((String) getJsonValue(jsonNode, "/peers/0/address")));
         assertThat(statusData.getPeers().get(3).getAddress(), is((String) getJsonValue(jsonNode, "/peers/3/address")));
         assertThat(statusData.getPeers().get(3).getNodeId(), is((String) getJsonValue(jsonNode, "/peers/3/node_id")));
+    }
+
+    private int getTimeInSecondsFromUptime(final String uptime) {
+
+        final String[] uptimeParts = uptime.split(" ");
+        int hours = 0;
+        int minutes = 0;
+        int seconds = 0;
+
+        for (String part : uptimeParts) {
+            if (part.endsWith("h")) {
+                hours = extractNumber(part);
+            } else if (part.endsWith("m")) {
+                minutes = extractNumber(part);
+            } else if (part.endsWith("s") && !part.endsWith("ms")) {
+                seconds = extractNumber(part);
+            }
+        }
+
+        return (hours * 60 * 60) + (minutes * 60) + seconds;
+    }
+
+    private int extractNumber(final String part) {
+        return Integer.parseInt(part.substring(0, part.length() - 1));
     }
 }
