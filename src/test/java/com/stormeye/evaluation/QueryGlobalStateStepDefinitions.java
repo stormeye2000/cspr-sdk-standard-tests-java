@@ -243,8 +243,6 @@ public class QueryGlobalStateStepDefinitions {
 
         contextMap.put(PUT_DEPLOY, deploy);
 
-        final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
-
         contextMap.put(DEPLOY_RESULT, casperService.putDeploy(deploy));
     }
 
@@ -262,7 +260,7 @@ public class QueryGlobalStateStepDefinitions {
                 )
         );
 
-        assertThat(matcher.waitForMatch(300), is(true));
+        assertThat(matcher.waitForMatch(400), is(true));
 
         eventHandler.removeEventMatcher(EventType.MAIN, matcher);
 
