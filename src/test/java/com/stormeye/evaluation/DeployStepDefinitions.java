@@ -151,10 +151,10 @@ public class DeployStepDefinitions {
         logger.info("deployResult.getDeployHash() {}", deployResult.getDeployHash());
     }
 
-    @Then("wait for a block added event with a timout of {long} seconds")
-    public void waitForABlockAddedEventWithATimoutOfSeconds(final long timeout) throws Exception {
+    @Then("wait for a block added event with a timeout of {long} seconds")
+    public void waitForABlockAddedEventWithATimeoutOfSeconds(final long timeout) throws Exception {
 
-        logger.info("Then wait for a block added event with a timout of {} seconds", timeout);
+        logger.info("Then wait for a block added event with a timeout of {} seconds", timeout);
 
         final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
 
