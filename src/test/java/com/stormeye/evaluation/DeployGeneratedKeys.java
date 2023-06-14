@@ -86,22 +86,6 @@ public class DeployGeneratedKeys {
 
     }
 
-    @Then("fund the account from the faucet user")
-    public void fundTheAccountFromTheFaucetUser() throws IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
-
-        logger.info("fund the account from the faucet user");
-
-        final URL faucetPrivateKeyUrl = AssetUtils.getFaucetAsset(1, "secret_key.pem");
-        assertThat(faucetPrivateKeyUrl, is(notNullValue()));
-        final Ed25519PrivateKey privateKey = new Ed25519PrivateKey();
-        privateKey.readPrivateKey(faucetPrivateKeyUrl.getFile());
-
-        contextMap.put(TRANSFER_AMOUNT, 1000000000000L);
-        contextMap.put(PAYMENT_AMOUNT, 100000L);
-
-        doDeploy(privateKey, contextMap.get(SENDER_KEY_PK));
-
-    }
 
     @Given("that a {string} receiver key is generated")
     public void thatAReceiverKeyIsGenerated(final String algo) throws IOException, GeneralSecurityException {
@@ -130,18 +114,43 @@ public class DeployGeneratedKeys {
 
     }
 
-    @Then("transfer to the receiver account")
-    public void transferToTheReceiverAccount() throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+    @Then("fund the account from the faucet user with a transfer amount of {long} and a payment amount of {long}")
+    public void fundTheAccountFromTheFaucetUserWithATransferAmountOfAndAPaymentAmmountOf(long transferAmount, long paymentAmount) throws IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+        logger.info("fund the account from the faucet user with a transfer amount of {} and a payment amount of {}", transferAmount, paymentAmount);
 
-        logger.info("transfer to the receiver account");
+        final URL faucetPrivateKeyUrl = AssetUtils.getFaucetAsset(1, "secret_key.pem");
+        assertThat(faucetPrivateKeyUrl, is(notNullValue()));
+        final Ed25519PrivateKey privateKey = new Ed25519PrivateKey();
+        privateKey.readPrivateKey(faucetPrivateKeyUrl.getFile());
 
-        contextMap.put(TRANSFER_AMOUNT, 2500000000L);
-        contextMap.put(PAYMENT_AMOUNT, 100000L);
+        contextMap.put(TRANSFER_AMOUNT, transferAmount);
+        contextMap.put(PAYMENT_AMOUNT, paymentAmount);
+
+        doDeploy(privateKey, contextMap.get(SENDER_KEY_PK));
+
+    }
+
+    @Then("transfer to the receiver account the transfer amount of {long} and the payment amount of {long}")
+    public void transferToTheReceiverAccountTheTransferAmountOfAndThePaymentAmountOf(long transferAmount, long paymentAmount) throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+        logger.info("transfer to the receiver account the transfer amount of {} and the payment amount of {}", transferAmount, paymentAmount);
+
+        contextMap.put(TRANSFER_AMOUNT, transferAmount);
+        contextMap.put(PAYMENT_AMOUNT, paymentAmount);
 
         doDeploy(contextMap.get(SENDER_KEY_SK), contextMap.get(RECEIVER_KEY));
 
     }
 
+    @And("the returned block header proposer contains the {string} algo")
+    public void theReturnedBlockHeaderProposerContainsTheAlgo(String algo) {
+        logger.info("the returned block header proposer contains the {} algo", algo);
+
+        final Digest matchingBlockHash = ((BlockAdded) contextMap.get(LAST_BLOCK_ADDED)).getBlockHash();
+        final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
+
+        assertThat(block.getBlock().getBody().getProposer().getTag().toString().toUpperCase(), is(algo.toUpperCase(Locale.ROOT)));
+
+    }
 
     private void doDeploy(final AbstractPrivateKey sk, final AbstractPublicKey pk) throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
 
@@ -165,16 +174,4 @@ public class DeployGeneratedKeys {
     }
 
 
-    @And("the returned block contains the {string} algo")
-    public void theReturnedBlockContainsTheAlgo(final String algo) {
-
-        logger.info("the returned block contains the {} algo", algo);
-
-        final Digest matchingBlockHash = ((BlockAdded) contextMap.get(LAST_BLOCK_ADDED)).getBlockHash();
-        final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
-
-        assertThat(block.getBlock().getBody().getProposer().getTag().toString().toUpperCase(), is(algo.toUpperCase(Locale.ROOT)));
-
-
-    }
 }
