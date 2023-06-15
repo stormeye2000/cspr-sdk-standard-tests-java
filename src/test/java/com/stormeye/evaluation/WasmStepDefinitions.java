@@ -3,6 +3,7 @@ package com.stormeye.evaluation;
 import com.casper.sdk.exception.NoSuchTypeException;
 import com.casper.sdk.helper.CasperConstants;
 import com.casper.sdk.helper.CasperDeployHelper;
+import com.casper.sdk.identifier.dictionary.StringDictionaryIdentifier;
 import com.casper.sdk.model.clvalue.CLValueString;
 import com.casper.sdk.model.clvalue.CLValueU256;
 import com.casper.sdk.model.clvalue.CLValueU8;
@@ -11,14 +12,27 @@ import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.deploy.NamedArg;
 import com.casper.sdk.model.deploy.executabledeploy.ModuleBytes;
+import com.casper.sdk.model.event.Event;
+import com.casper.sdk.model.event.EventTarget;
+import com.casper.sdk.model.event.EventType;
+import com.casper.sdk.model.event.deployaccepted.DeployAccepted;
+import com.casper.sdk.model.key.PublicKey;
+import com.casper.sdk.model.stateroothash.StateRootHashData;
+import com.casper.sdk.model.storedvalue.StoredValueData;
 import com.casper.sdk.service.CasperService;
+import com.stormeye.event.EventHandler;
+import com.stormeye.matcher.DeployMatchers;
+import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
+import io.cucumber.java.BeforeAll;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.apache.cxf.helpers.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +48,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.casper.sdk.helper.CasperDeployHelper.getPaymentModuleBytes;
-import static com.stormeye.evaluation.StepConstants.DEPLOY_RESULT;
-import static com.stormeye.evaluation.StepConstants.WASM_PATH;
+import static com.stormeye.evaluation.StepConstants.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -50,6 +63,8 @@ public class WasmStepDefinitions {
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
+    private EventHandler eventHandler = new EventHandler(EventTarget.POJO);;
+
 
     @Given("that a smart contract {string} is located in the {string} folder")
     public void thatASmartContractIsInTheFolder(String wasmFileName, String contractsFolder) throws IOException {
@@ -62,7 +77,7 @@ public class WasmStepDefinitions {
         assertThat(resource.openStream(), is(notNullValue()));
     }
 
-    @Then("when the wasm is loaded as from the file system")
+    @When("the wasm is loaded as from the file system")
     public void whenTheWasmIsLoadedAsFromTheFileSystem() throws IOException, ValueSerializationException, NoSuchTypeException, GeneralSecurityException {
         logger.info("Then when the wasm is loaded as from the file system");
 
@@ -85,6 +100,8 @@ public class WasmStepDefinitions {
         final Ed25519PrivateKey privateKey = new Ed25519PrivateKey();
         privateKey.readPrivateKey(faucetPrivateKeyUrl.getFile());
 
+        this.contextMap.put("faucetPrivateKey", privateKey);
+
         final List<NamedArg<?>> paymentArgs = new LinkedList<>();
         //paymentArgs.add(new NamedArg<>("amount", new CLValueU512(payment)));
         paymentArgs.add(new NamedArg<>("token_decimals", new CLValueU8(tokenDecimals)));
@@ -96,7 +113,8 @@ public class WasmStepDefinitions {
         final ModuleBytes session = ModuleBytes.builder().bytes(bytes).args(paymentArgs).build();
         final ModuleBytes paymentModuleBytes = getPaymentModuleBytes(payment);
 
-        final Deploy deploy = CasperDeployHelper.buildDeploy(privateKey,
+        final Deploy deploy = CasperDeployHelper.buildDeploy(
+                privateKey,
                 chainName,
                 session,
                 paymentModuleBytes,
@@ -111,4 +129,45 @@ public class WasmStepDefinitions {
         assertThat(deployResult.getDeployHash(), is(notNullValue()));
         contextMap.put(DEPLOY_RESULT, deployResult);
     }
+
+    @And("the wasm has been successfully deployed")
+    public void theWasmHasBeenSuccessfullyDeployed() throws Exception {
+
+        logger.info("the wasm has been successfully deployed");
+
+        final DeployResult deployResult = contextMap.get(DEPLOY_RESULT);
+
+        logger.info("the Deploy {} is accepted", deployResult.getDeployHash());
+
+        final ExpiringMatcher<Event<DeployAccepted>> matcher = (ExpiringMatcher<Event<DeployAccepted>>) eventHandler.addEventMatcher(
+                EventType.DEPLOYS,
+                DeployMatchers.theDeployIsAccepted(
+                        deployResult.getDeployHash(),
+                        event -> contextMap.put(DEPLOY_ACCEPTED, event.getData())
+                )
+        );
+
+        assertThat(matcher.waitForMatch(5000L), is(true));
+        eventHandler.removeEventMatcher(EventType.DEPLOYS, matcher);
+    }
+
+    @Then("the account named keys contain the {string}")
+    public void theAccountNamedKeysContainThe(String contractName) throws IOException {
+
+        final Ed25519PrivateKey privateKey = this.contextMap.get("faucetPrivateKey");
+        PublicKey publicKey = PublicKey.fromAbstractPublicKey(privateKey.derivePublicKey());
+        final String accountHash = publicKey.generateAccountHash(true);
+        final StringDictionaryIdentifier key = StringDictionaryIdentifier.builder().dictionary(accountHash).build();
+
+        final StateRootHashData stateRootHash = this.casperService.getStateRootHash();
+        final StoredValueData stateItem = this.casperService.getStateItem(
+                stateRootHash.getStateRootHash(),
+                key.getDictionary(),
+                new ArrayList<>());
+
+        assertThat(stateItem, is(notNullValue()));
+        assertThat(stateItem.getStoredValue(), is(notNullValue()));
+    }
+
+
 }

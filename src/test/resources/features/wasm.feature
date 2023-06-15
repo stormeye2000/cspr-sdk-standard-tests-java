@@ -2,4 +2,7 @@ Feature: wasm operations
 
   Scenario: Read wasm
     Given that a smart contract "erc20.wasm" is located in the "contracts" folder
-    Then when the wasm is loaded as from the file system
+    When the wasm is loaded as from the file system
+    And the wasm has been successfully deployed
+    Then the account named keys contain the "erc20_token_contract"
+
