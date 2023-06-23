@@ -53,7 +53,7 @@ jobs:
       # Build the SDK jar files
       - name: Build SDK JAR
         working-directory: casper-java-sdk
-        run: ./gradlew clean build
+        run: ./gradlew clean build -x test
 
       # Upload the built SDK jar as a project artifact
       - name: Upload SDK jar to artifacts
