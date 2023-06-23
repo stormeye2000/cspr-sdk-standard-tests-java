@@ -15,7 +15,7 @@ jobs:
     name: Java SDK Standard Tests
     runs-on: ubuntu-latest
     services:
-      storm-nctl:
+      nctl:
         image: stormeye2000/cspr-nctl:1.5
         options: --name cspr-nctl
         env:

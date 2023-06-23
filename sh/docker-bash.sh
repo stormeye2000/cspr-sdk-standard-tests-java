@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-docker exec -it storm-nctl bash
+docker exec -it cspr-nctl bash
