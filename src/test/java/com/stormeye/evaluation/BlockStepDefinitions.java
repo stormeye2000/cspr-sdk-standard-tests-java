@@ -49,8 +49,7 @@ import java.util.Random;
 
 import static com.stormeye.matcher.BlockAddedMatchers.hasTransferHashWithin;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsStringIgnoringCase;
-import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -230,7 +229,7 @@ public class BlockStepDefinitions {
         assertThat(latestBlockSdk.getBlock().getBody().getProposer().toString(), is(latestBlockNode.get("body").get("proposer").asText()));
 
         if (latestBlockNode.get("body").get("deploy_hashes").size() == 0) {
-            assertThat(latestBlockSdk.getBlock().getBody().getDeployHashes().isEmpty(), is(true));
+            assertThat(latestBlockSdk.getBlock().getBody().getDeployHashes(), is(empty()));
         } else {
             final JsonBlockData deploysLatestBlockSdk = latestBlockSdk;
             latestBlockNode.get("body").findValues("deploy_hashes").forEach(
@@ -238,7 +237,7 @@ public class BlockStepDefinitions {
             );
         }
         if (latestBlockNode.get("body").get("transfer_hashes").size() == 0) {
-            assertThat(latestBlockSdk.getBlock().getBody().getTransferHashes().isEmpty(), is(true));
+            assertThat(latestBlockSdk.getBlock().getBody().getTransferHashes(), is(empty()));
         } else {
             final JsonBlockData transfersLatestBlockSdk = latestBlockSdk;
             latestBlockNode.get("body").findValues("transfer_hashes").forEach(
@@ -255,7 +254,7 @@ public class BlockStepDefinitions {
         final JsonBlockData latestBlockSdk = contextMap.get("blockDataSdk");
         final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
-        assertThat(latestBlockSdk.getBlock().getHash().toString().equals(latestBlockNode.get("hash").asText()), is(true));
+        assertThat(latestBlockSdk.getBlock().getHash().toString(), is(latestBlockNode.get("hash").asText()));
     }
 
     @And("the header of the returned block is equal to the header of the returned test node block")
@@ -288,7 +287,7 @@ public class BlockStepDefinitions {
         final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
         final List<JsonProof> proofsSdk = latestBlockSdk.getBlock().getProofs();
-        assertThat(latestBlockNode.get("proofs").findValues("public_key").size() == proofsSdk.size(), is(true));
+        assertThat(latestBlockNode.get("proofs").findValues("public_key").size(), is(proofsSdk.size()));
 
         latestBlockNode.get("proofs").findValues("public_key").forEach(
                 p -> assertThat((int) proofsSdk.stream().filter(q -> p.asText().equals(q.getPublicKey().toString())).count(), is(1))
@@ -353,7 +352,7 @@ public class BlockStepDefinitions {
                 }
         );
 
-        assertThat(transferHashes.size() > 0, is(true));
+        assertThat(transferHashes.size(), is(greaterThan(0)));
     }
 
     @Given("that the latest block is requested via the sdk")
