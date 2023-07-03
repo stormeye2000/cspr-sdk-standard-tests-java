@@ -18,7 +18,7 @@ public class TestProperties {
     public TestProperties() {
 
         this.hostname = getProperty("cspr.hostname", "localhost");
-        this.dockerName = getProperty("cspr.docker.name", "storm-nctl");
+        this.dockerName = getProperty("cspr.docker.name", "cspr-nctl");
         this.rcpPort = getIntProperty("cspr.port.rcp", 11101);
         this.restPort = getIntProperty("cspr.port.rest", 14101);
         this.ssePort = getIntProperty("cspr.port.sse", 18101);
