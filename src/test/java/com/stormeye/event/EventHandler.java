@@ -45,7 +45,7 @@ public class EventHandler {
 
         sseSources.add(
                 CasperClientProvider.getInstance().getEventService().consumeEvents(eventType, eventTarget, null, event -> {
-                    logger.info("Got {} event {}", eventType, event);
+//                    logger.info("Got {} event {}", eventType, event);
                     handleMatchers(event);
                 }, throwable -> logger.error("Error processing SSE event", throwable))
         );
