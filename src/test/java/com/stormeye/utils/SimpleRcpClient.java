@@ -34,6 +34,20 @@ public class SimpleRcpClient {
     }
 
     /**
+     * Obtains the era summary
+     * Since 1.5
+     * This replaces chain_get_era_info_by_switch_block
+     * No need now to wait for era end to query the era info
+     *
+     * @param hash the block to obtain the era summary from
+     * @return the Json result
+     * @throws Exception if an IO error occurs
+     */
+    public JsonNode getEraSummary(final String hash) throws Exception {
+        return rcp("chain_get_era_summary", "[{\"Hash\":  \"" + hash + "\"}]");
+    }
+
+    /**
      * Obtains the validator changes using the info_get_validator_changes RCP method.
      *
      * @return the info_get_validator_changes_result node

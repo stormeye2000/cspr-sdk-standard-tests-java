@@ -9,8 +9,8 @@ import com.casper.sdk.model.block.JsonBlockData;
 import com.casper.sdk.model.block.JsonProof;
 import com.casper.sdk.model.common.Digest;
 import com.casper.sdk.model.common.Ttl;
-import com.casper.sdk.model.deploy.*;
-import com.casper.sdk.model.era.EraInfoData;
+import com.casper.sdk.model.deploy.Deploy;
+import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.event.Event;
 import com.casper.sdk.model.event.EventTarget;
 import com.casper.sdk.model.event.EventType;
@@ -42,15 +42,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static com.stormeye.matcher.BlockAddedMatchers.hasTransferHashWithin;
-import static com.stormeye.matcher.NctlMatchers.isValidMerkleProof;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -112,15 +109,6 @@ public class BlockStepDefinitions {
         assertThat(csprClientException.getMessage().toLowerCase().contains(blockErrorCode), is(true));
     }
 
-    private PublicKey getPublicKey(final String key) {
-        try {
-            final PublicKey publicKey = new PublicKey();
-            publicKey.createPublicKey(key);
-            return publicKey;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private void validateBlockHash(final Digest hash) {
         assertThat(hash, is(notNullValue()));
@@ -302,108 +290,15 @@ public class BlockStepDefinitions {
         );
     }
 
-    @And("the switch block hashes of the returned block are equal to the switch block hashes of the returned test node block")
-    public void theSwitchBlockHashesOfTheReturnedBlockAreEqualToTheSwitchBlockHashesOfTheReturnedTestNodeBlock() {
 
-        logger.info("And the switch block hashes of the returned block are equal to the switch block hashes of the returned test node block");
 
-        final EraInfoData data = contextMap.get("eraSwitchBlockData");
 
-        assertThat(contextMap.get("nodeEraSwitchBlock").equals(data.getEraSummary().getBlockHash()), is(true));
-    }
 
-    @And("the switch block eras of the returned block are equal to the switch block eras of the returned test node block")
-    public void theSwitchBlockErasOfTheReturnedBlockAreEqualToTheSwitchBlockErasOfTheReturnedTestNodeBlock() throws JsonProcessingException {
-        logger.info("And the switch block eras are equal");
 
-        final EraInfoData data = contextMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(contextMap.get("nodeEraSwitchData").toString());
 
-        assertThat(node.get("era_summary").get("era_id").toString().equals(data.getEraSummary().getEraId().toString()), is(true));
-    }
 
-    @And("the switch block merkle proofs of the returned block are equal to the switch block merkle proofs of the returned test node block")
-    public void theSwitchBlockMerkleProofsOfTheReturnedBlockAreEqualToTheSwitchBlockMerkleProofsOfTheReturnedTestNodeBlock() throws JsonProcessingException {
-        logger.info("And the switch block merkle proofs of the returned block are equal to the switch block merkle proofs of the returned test node block");
 
-        final EraInfoData data = contextMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(contextMap.get("nodeEraSwitchData").toString());
 
-        assertThat(data.getEraSummary().getMerkleProof(), is(isValidMerkleProof(node.get("era_summary").get("merkle_proof").asText())));
-
-        final Digest digest = new Digest(data.getEraSummary().getMerkleProof());
-        assertThat(digest.isValid(), is(true));
-    }
-
-    @And("the switch block state root hashes of the returned block are equal to the switch block state root hashes of the returned test node block")
-    public void theSwitchBlockStateRootHashesOfTheReturnedBlockAreEqualToTheSwitchBlockStateRootHashesOfTheReturnedTestNodeBlock() throws JsonProcessingException {
-
-        logger.info("And the switch block state root hashes of the returned block are equal to the switch block state root hashes of the returned test node block");
-
-        final EraInfoData data = contextMap.get("eraSwitchBlockData");
-        final JsonNode node = mapper.readTree(contextMap.get("nodeEraSwitchData").toString());
-
-        assertThat(node.get("era_summary").get("state_root_hash").asText().equals(data.getEraSummary().getStateRootHash()), is(true));
-    }
-
-    @And("the delegators data of the returned block is equal to the delegators data of the returned test node block")
-    public void theDelegatorsDataOfTheReturnedBlockIsEqualToTheDelegatorsDataOfTheReturnedTestNodeBlock() throws JsonProcessingException {
-        logger.info("And the delegators data of the returned block is equal to the delegators data of the returned test node block");
-
-        final EraInfoData data = contextMap.get("eraSwitchBlockData");
-        final JsonNode allocations = mapper.readTree(contextMap.get("nodeEraSwitchData").toString())
-                .get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
-
-        final List<SeigniorageAllocation> delegatorsSdk = data.getEraSummary()
-                .getStoredValue().getValue().getSeigniorageAllocations()
-                .stream()
-                .filter(q -> q instanceof Delegator)
-                .map(d -> (Delegator) d)
-                .collect(Collectors.toList());
-
-        allocations.findValues("Delegator").forEach(
-                d -> {
-                    final List<SeigniorageAllocation> found = delegatorsSdk
-                            .stream()
-                            .filter(q -> getPublicKey(d.get("delegator_public_key").asText()).equals(((Delegator) q).getDelegatorPublicKey()))
-                            .collect(Collectors.toList());
-
-                    assertThat(found.isEmpty(), is(false));
-                    assertThat(d.get("validator_public_key").asText().equals(((Delegator) found.get(0)).getValidatorPublicKey().toString()), is(true));
-                    assertThat(d.get("amount").asText().equals(found.get(0).getAmount().toString()), is(true));
-                }
-        );
-    }
-
-    @And("the validators data of the returned block is equal to the validators data of the returned test node block")
-    public void theValidatorsDataOfTheReturnedBlockIsEqualToTheValidatorsDataOfTheReturnedTestNodeBlock() throws JsonProcessingException {
-
-        logger.info("And the validators data of the returned block is equal to the validators data of the returned test node block");
-
-        final EraInfoData data = contextMap.get("eraSwitchBlockData");
-
-        final JsonNode allocations = mapper.readTree(contextMap.get("nodeEraSwitchData").toString())
-                .get("era_summary").get("stored_value").get("EraInfo").get("seigniorage_allocations");
-
-        final List<SeigniorageAllocation> validatorsSdk = data.getEraSummary()
-                .getStoredValue().getValue().getSeigniorageAllocations()
-                .stream()
-                .filter(q -> q instanceof Validator)
-                .map(d -> (Validator) d)
-                .collect(Collectors.toList());
-
-        allocations.findValues("Validator").forEach(
-                d -> {
-                    final List<SeigniorageAllocation> found = validatorsSdk
-                            .stream()
-                            .filter(q -> getPublicKey(d.get("validator_public_key").asText()).equals(((Validator) q).getValidatorPublicKey()))
-                            .collect(Collectors.toList());
-
-                    assertThat(found.isEmpty(), is(false));
-                    assertThat(d.get("amount").asText().equals(found.get(0).getAmount().toString()), is(true));
-                }
-        );
-    }
 
     @Given("that chain transfer data is initialised")
     public void thatChainTransferDataIsInitialised() throws IOException {
@@ -507,32 +402,4 @@ public class BlockStepDefinitions {
         );
     }
 
-    @Then("request the corresponding era switch block via the sdk")
-    public void requestTheCorrespondingEraSwitchBlockViaTheSdk() {
-        logger.info("Then request the corresponding era switch block via the sdk");
-
-        contextMap.put("eraSwitchBlockData", getCasperService().getEraInfoBySwitchBlock(new HashBlockIdentifier(contextMap.get("nodeEraSwitchBlock"))));
-    }
-
-    @Given("that a step event is received")
-    public void thatAStepEventIsReceived() throws Exception {
-        logger.info("Then wait for the test node era switch block step event");
-
-        final ExpiringMatcher<Event<Step>> matcher = (ExpiringMatcher<Event<Step>>) eraEventHandler.addEventMatcher(
-                EventType.MAIN,
-                EraMatcher.theEraHasChanged()
-        );
-
-        assertThat(matcher.waitForMatch(5000L), is(true));
-
-        final JsonNode result = nctl.getChainEraInfo();
-
-        eraEventHandler.removeEventMatcher(EventType.MAIN, matcher);
-
-        assertThat(result.get("era_summary").get("block_hash").textValue(), is(notNullValue()));
-        validateBlockHash(new Digest(result.get("era_summary").get("block_hash").textValue()));
-
-        contextMap.put("nodeEraSwitchBlock", result.get("era_summary").get("block_hash").textValue());
-        contextMap.put("nodeEraSwitchData", result);
-    }
 }

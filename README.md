@@ -22,12 +22,12 @@ The cucumber test reports will be written to the _reports_ folder off the projec
 
 The following system parameters (-D) are supported to specify the nctl host and ports. If not provided the defaults are used:
 
-| Parameter  | Description  | Default   | 
-|---|---|---|
-| cspr.hostname | The host name | _localhost_  | 
-| cspr.port.rcp  | The RCP port number | _11101_ |
-| cspr.port.rest | The SSE port number | _18101_ |
-| cspr.docker.name | The docker container name | _storm-nctl_ |
+| Parameter  | Description  | Default     | 
+|---|---|-------------|
+| cspr.hostname | The host name | _localhost_ | 
+| cspr.port.rcp  | The RCP port number | _11101_     |
+| cspr.port.rest | The SSE port number | _18101_     |
+| cspr.docker.name | The docker container name | _cspr-nctl_ |
 
 
 
