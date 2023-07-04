@@ -4,31 +4,29 @@ import com.casper.sdk.exception.NoSuchTypeException;
 import com.casper.sdk.helper.CasperConstants;
 import com.casper.sdk.helper.CasperDeployHelper;
 import com.casper.sdk.identifier.dictionary.StringDictionaryIdentifier;
+import com.casper.sdk.model.account.Account;
 import com.casper.sdk.model.clvalue.CLValueString;
 import com.casper.sdk.model.clvalue.CLValueU256;
 import com.casper.sdk.model.clvalue.CLValueU8;
 import com.casper.sdk.model.common.Ttl;
+import com.casper.sdk.model.contract.NamedKey;
 import com.casper.sdk.model.deploy.Deploy;
+import com.casper.sdk.model.deploy.DeployData;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.deploy.NamedArg;
 import com.casper.sdk.model.deploy.executabledeploy.ModuleBytes;
-import com.casper.sdk.model.event.Event;
-import com.casper.sdk.model.event.EventTarget;
-import com.casper.sdk.model.event.EventType;
-import com.casper.sdk.model.event.deployaccepted.DeployAccepted;
+import com.casper.sdk.model.deploy.executionresult.Success;
 import com.casper.sdk.model.key.PublicKey;
 import com.casper.sdk.model.stateroothash.StateRootHashData;
+import com.casper.sdk.model.storedvalue.StoredValueAccount;
 import com.casper.sdk.model.storedvalue.StoredValueData;
 import com.casper.sdk.service.CasperService;
-import com.stormeye.event.EventHandler;
-import com.stormeye.matcher.DeployMatchers;
-import com.stormeye.matcher.ExpiringMatcher;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
+import com.stormeye.utils.DeployUtils;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
-import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -38,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -48,8 +45,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.casper.sdk.helper.CasperDeployHelper.getPaymentModuleBytes;
-import static com.stormeye.evaluation.StepConstants.*;
+import static com.stormeye.evaluation.StepConstants.DEPLOY_RESULT;
+import static com.stormeye.evaluation.StepConstants.WASM_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 
@@ -63,8 +62,6 @@ public class WasmStepDefinitions {
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
-    private EventHandler eventHandler = new EventHandler(EventTarget.POJO);;
-
 
     @Given("that a smart contract {string} is located in the {string} folder")
     public void thatASmartContractIsInTheFolder(String wasmFileName, String contractsFolder) throws IOException {
@@ -73,7 +70,7 @@ public class WasmStepDefinitions {
         final String wasmPath = "/" + contractsFolder + "/" + wasmFileName;
         contextMap.put(WASM_PATH, wasmPath);
         final URL resource = getClass().getResource(wasmPath);
-        //noinspection ConstantConditions
+        //noinspection DataFlowIssue
         assertThat(resource.openStream(), is(notNullValue()));
     }
 
@@ -83,15 +80,15 @@ public class WasmStepDefinitions {
 
         final URL resource = getClass().getResource(contextMap.get(WASM_PATH));
 
-        //noinspection ConstantConditions
+        //noinspection DataFlowIssue
         final byte[] bytes = IOUtils.readBytesFromStream(resource.openStream());
         assertThat(bytes.length, is(189336));
 
         final String chainName = "casper-net-1";
-        final BigInteger payment = BigDecimal.valueOf(50e9).toBigInteger();
+        final BigInteger payment = new BigInteger("200000000000");
         final byte tokenDecimals = 11;
         final String tokenName = "Acme Token";
-        final BigInteger tokenTotalSupply = BigDecimal.valueOf(1e15).toBigInteger();
+        final BigInteger tokenTotalSupply = new BigInteger("500000000000");
         final String tokenSymbol = "ACME";
 
         // Load faucet private key
@@ -131,7 +128,7 @@ public class WasmStepDefinitions {
     }
 
     @And("the wasm has been successfully deployed")
-    public void theWasmHasBeenSuccessfullyDeployed() throws Exception {
+    public void theWasmHasBeenSuccessfullyDeployed() {
 
         logger.info("the wasm has been successfully deployed");
 
@@ -139,20 +136,16 @@ public class WasmStepDefinitions {
 
         logger.info("the Deploy {} is accepted", deployResult.getDeployHash());
 
-        final ExpiringMatcher<Event<DeployAccepted>> matcher = (ExpiringMatcher<Event<DeployAccepted>>) eventHandler.addEventMatcher(
-                EventType.DEPLOYS,
-                DeployMatchers.theDeployIsAccepted(
-                        deployResult.getDeployHash(),
-                        event -> contextMap.put(DEPLOY_ACCEPTED, event.getData())
-                )
-        );
+        final DeployData deployData = DeployUtils.waitForDeploy(deployResult.getDeployHash(), 300, casperService);
 
-        assertThat(matcher.waitForMatch(5000L), is(true));
-        eventHandler.removeEventMatcher(EventType.DEPLOYS, matcher);
+        assertThat(deployData, is(notNullValue()));
+        assertThat(deployData.getDeploy(), is(notNullValue()));
+        assertThat(deployData.getExecutionResults(), is(not(empty())));
+        assertThat(deployData.getExecutionResults().get(0).getResult(), is(instanceOf(Success.class)));
     }
 
-    @Then("the account named keys contain the {string}")
-    public void theAccountNamedKeysContainThe(String contractName) throws IOException {
+    @Then("the account named keys contain the {string} name")
+    public void theAccountNamedKeysContainThe(final String contractName) throws IOException {
 
         final Ed25519PrivateKey privateKey = this.contextMap.get("faucetPrivateKey");
         PublicKey publicKey = PublicKey.fromAbstractPublicKey(privateKey.derivePublicKey());
@@ -166,8 +159,12 @@ public class WasmStepDefinitions {
                 new ArrayList<>());
 
         assertThat(stateItem, is(notNullValue()));
-        assertThat(stateItem.getStoredValue(), is(notNullValue()));
+        assertThat(stateItem.getStoredValue(), is(instanceOf(StoredValueAccount.class)));
+
+        Account account = (Account) stateItem.getStoredValue().getValue();
+        assertThat(account.getAssociatedKeys(), is(not(empty())));
+        account.getNamedKeys().forEach((NamedKey namedKey) ->
+                assertThat(namedKey.getName(), startsWithIgnoringCase(contractName))
+        );
     }
-
-
 }
