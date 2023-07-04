@@ -15,7 +15,7 @@ Feature: query_global_state
     Given that the state root hash is known
     When the query_global_state RCP method is invoked with the state root hash as the query identifier and an invalid key
     Then an error code of -32002 is returned
-    And an error message of "failed to parse key: uref-key from string error: no access rights as suffix" is returned
+    And an error message of "Failed to parse query key" is returned
 
 
   Scenario: query_global_state by state with invalid block hash

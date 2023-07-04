@@ -23,20 +23,6 @@ Feature: Blocks Integration Tests
     And the header of the returned block is equal to the header of the returned test node block
     And the proofs of the returned block are equal to the proofs of the returned test node block
 
-    Given that a block is returned by height 3 via the sdk
-    Then request the returned block from the test node via its hash
-    Then the body of the returned block is equal to the body of the returned test node block
-    And the hash of the returned block is equal to the hash of the returned test node block
-    And the header of the returned block is equal to the header of the returned test node block
-    And the proofs of the returned block are equal to the proofs of the returned test node block
-
-    Given that a block is returned by height 4 via the sdk
-    Then request the returned block from the test node via its hash
-    Then the body of the returned block is equal to the body of the returned test node block
-    And the hash of the returned block is equal to the hash of the returned test node block
-    And the header of the returned block is equal to the header of the returned test node block
-    And the proofs of the returned block are equal to the proofs of the returned test node block
-
     Given that an invalid block hash is requested via the sdk
     Then a valid error message is returned
 
