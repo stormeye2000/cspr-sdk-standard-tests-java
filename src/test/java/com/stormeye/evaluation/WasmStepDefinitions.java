@@ -5,6 +5,7 @@ import com.casper.sdk.helper.CasperConstants;
 import com.casper.sdk.helper.CasperDeployHelper;
 import com.casper.sdk.identifier.dictionary.StringDictionaryIdentifier;
 import com.casper.sdk.model.account.Account;
+import com.casper.sdk.model.clvalue.AbstractCLValue;
 import com.casper.sdk.model.clvalue.CLValueString;
 import com.casper.sdk.model.clvalue.CLValueU256;
 import com.casper.sdk.model.clvalue.CLValueU8;
@@ -21,6 +22,7 @@ import com.casper.sdk.model.stateroothash.StateRootHashData;
 import com.casper.sdk.model.storedvalue.StoredValueAccount;
 import com.casper.sdk.model.storedvalue.StoredValueData;
 import com.casper.sdk.service.CasperService;
+import com.stormeye.exception.NotImplementedException;
 import com.stormeye.utils.AssetUtils;
 import com.stormeye.utils.CasperClientProvider;
 import com.stormeye.utils.ContextMap;
@@ -39,10 +41,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static com.casper.sdk.helper.CasperDeployHelper.getPaymentModuleBytes;
 import static com.stormeye.evaluation.StepConstants.DEPLOY_RESULT;
@@ -145,7 +144,9 @@ public class WasmStepDefinitions {
     }
 
     @Then("the account named keys contain the {string} name")
-    public void theAccountNamedKeysContainThe(final String contractName) throws IOException {
+    public void theAccountNamedKeysContainThe(final String contractName) throws Exception {
+
+        Thread.sleep(5000L);
 
         final Ed25519PrivateKey privateKey = this.contextMap.get("faucetPrivateKey");
         PublicKey publicKey = PublicKey.fromAbstractPublicKey(privateKey.derivePublicKey());
@@ -153,6 +154,7 @@ public class WasmStepDefinitions {
         final StringDictionaryIdentifier key = StringDictionaryIdentifier.builder().dictionary(accountHash).build();
 
         final StateRootHashData stateRootHash = this.casperService.getStateRootHash();
+        this.contextMap.put("stateRootHash", stateRootHash.getStateRootHash());
         final StoredValueData stateItem = this.casperService.getStateItem(
                 stateRootHash.getStateRootHash(),
                 key.getDictionary(),
@@ -163,8 +165,51 @@ public class WasmStepDefinitions {
 
         Account account = (Account) stateItem.getStoredValue().getValue();
         assertThat(account.getAssociatedKeys(), is(not(empty())));
-        account.getNamedKeys().forEach((NamedKey namedKey) ->
-                assertThat(namedKey.getName(), startsWithIgnoringCase(contractName))
+        account.getNamedKeys().forEach((NamedKey namedKey) -> {
+                    assertThat(namedKey.getName(), startsWithIgnoringCase(contractName));
+                    if (namedKey.getKey().startsWith("hash")) {
+                        this.contextMap.put("contractHash", namedKey.getKey());
+                    }
+                }
         );
+
+    }
+
+    @And("the contract data {string} is a {string} with a value of {string} and bytes of {string}")
+    public void theContractDataIsAWithAValueOf(final String path,
+                                               final String typeName,
+                                               final String value,
+                                               final String hexBytes) {
+
+        final String stateRootHash = this.contextMap.get("stateRootHash");
+        final String contractHash = this.contextMap.get("contractHash");
+
+        final StoredValueData stateItem = this.casperService.getStateItem(
+                stateRootHash,
+                contractHash,
+                Collections.singletonList(path)
+        );
+
+        //noinspection rawtypes
+        final AbstractCLValue clValue = (AbstractCLValue) stateItem.getStoredValue().getValue();
+        assertThat(clValue.getClType().getTypeName(), is(typeName));
+
+        final Object expectedValue = convertToCLTypeValue(typeName, value);
+        assertThat(clValue.getValue(), is(expectedValue));
+
+        assertThat(clValue.getBytes(), is(hexBytes));
+    }
+
+    private static Object convertToCLTypeValue(final String typeName, final String value) {
+        switch (typeName) {
+            case "String":
+                return value;
+            case "U8":
+                return Byte.parseByte(value);
+            case "U256":
+                return new BigInteger(value);
+            default:
+                throw new NotImplementedException("Not implemented conversion for type " + typeName);
+        }
     }
 }
