@@ -15,6 +15,7 @@ import com.casper.sdk.model.deploy.DeployData;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.deploy.NamedArg;
 import com.casper.sdk.model.deploy.executabledeploy.ModuleBytes;
+import com.casper.sdk.model.deploy.executabledeploy.StoredContractByHash;
 import com.casper.sdk.model.deploy.executionresult.Success;
 import com.casper.sdk.model.dictionary.DictionaryData;
 import com.casper.sdk.model.key.PublicKey;
@@ -208,21 +209,18 @@ public class WasmStepDefinitions {
                                                                    final String value,
                                                                    final String hexBytes) throws ValueSerializationException {
 
-        // private AbstractCLValue getContractDictionaryItem(final String dictionary, final String key)  {
-
         final String stateRootHash = this.contextMap.get("stateRootHash");
         final String contractHash = this.contextMap.get("contractHash");
+        final Ed25519PrivateKey faucetPrivateKey = this.contextMap.get("faucetPrivateKey");
 
-        final Ed25519PrivateKey privateKey = this.contextMap.get("faucetPrivateKey");
-
-        final CLValuePublicKey clValuePublicKey = new CLValuePublicKey(PublicKey.fromAbstractPublicKey(privateKey.derivePublicKey()));
+        final CLValuePublicKey clValuePublicKey = new CLValuePublicKey(PublicKey.fromAbstractPublicKey(faucetPrivateKey.derivePublicKey()));
         final byte[] decode = Hex.decode(clValuePublicKey.getBytes());
         final byte[] encode = Base64.getEncoder().encode(decode);
         final String balanceKey = Hex.encode(encode);
 
         final ContractNamedKeyDictionaryIdentifier identifier = ContractNamedKeyDictionaryIdentifier
                 .builder()
-                .contractNamedKey(ContractNamedKey.builder().dictionaryItemKey(contractHash).dictionaryName("balances").key(balanceKey).build())
+                .contractNamedKey(ContractNamedKey.builder().dictionaryItemKey(contractHash).dictionaryName(dictionary).key(balanceKey).build())
                 .build();
         final DictionaryData stateDictionaryItem = this.casperService.getStateDictionaryItem(
                 stateRootHash,
@@ -236,6 +234,53 @@ public class WasmStepDefinitions {
         assertThat(clValue.getValue(), is(expectedValue));
 
         assertThat(clValue.getBytes(), is(hexBytes));
+    }
+
+
+    @When("the contract entry point is invoked with a transfer amount of {string}")
+    public void theContractEntryPointIsInvokedWithATransferAmountOf(final String transferAmount) throws Exception {
+
+        // Create new recipient
+        final Ed25519PrivateKey recipientPrivateKey = Ed25519PrivateKey.deriveRandomKey();
+        final PublicKey recipient = PublicKey.fromAbstractPublicKey(recipientPrivateKey.derivePublicKey());
+        final BigInteger amount = new BigInteger(transferAmount);
+        final String contractHash = ((String)this.contextMap.get("contractHash")).substring(5);
+        final Ed25519PrivateKey faucetPrivateKey = this.contextMap.get("faucetPrivateKey");
+
+        final List<NamedArg<?>> args = Arrays.asList(
+                new NamedArg<>("recipient", new CLValuePublicKey(recipient)),
+                new NamedArg<>("amount", new CLValueU256(amount))
+        );
+
+        final StoredContractByHash session = StoredContractByHash.builder()
+                .entryPoint("transfer")
+                .hash(contractHash)
+                .args(args)
+                .build();
+
+        final ModuleBytes payment = getPaymentModuleBytes(new BigInteger("2500000000"));
+
+        final String chainName = "casper-net-1";
+        final Deploy transferDeploy = CasperDeployHelper.buildDeploy(faucetPrivateKey,
+                chainName,
+                session,
+                payment,
+                1L,
+                Ttl.builder().ttl("30m").build(),
+                new Date(),
+                new ArrayList<>()
+        );
+
+        DeployResult deployResult = this.casperService.putDeploy(transferDeploy);
+
+        assertThat(deployResult.getDeployHash(), is(notNullValue()));
+
+        this.contextMap.put("transferDeploy", transferDeploy);
+    }
+
+    @Then("the contract invocation deploy is successful")
+    public void theContractInvocationDeployIsSuccessful() {
+
     }
 
     private static Object convertToCLTypeValue(final String typeName, final String value) {
