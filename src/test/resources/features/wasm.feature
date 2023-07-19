@@ -1,6 +1,6 @@
 Feature: wasm operations
 
-  Scenario: Read wasm
+  Scenario: Read wasm, deploy and invoke
     Given that a smart contract "erc20.wasm" is located in the "contracts" folder
     When the wasm is loaded as from the file system
     And the wasm has been successfully deployed

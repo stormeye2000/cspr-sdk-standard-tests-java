@@ -1,4 +1,5 @@
 Feature: Era Integration Tests
+
   Scenario: Evaluate Era Methods
 
     Given that the era summary is requested via the sdk

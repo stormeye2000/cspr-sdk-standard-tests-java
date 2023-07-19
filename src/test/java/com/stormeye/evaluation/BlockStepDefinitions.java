@@ -219,7 +219,7 @@ public class BlockStepDefinitions {
         JsonBlockData latestBlockSdk = contextMap.get("blockDataSdk");
         final JsonNode latestBlockNode = mapper.readTree(contextMap.get("blockDataNode").toString());
 
-        if (!latestBlockSdk.getBlock().getHash().toString().equals(latestBlockNode.get("hash").asText())){
+        if (!latestBlockSdk.getBlock().getHash().toString().equals(latestBlockNode.get("hash").asText())) {
             //Fixes intermittent syncing issues with nctl/sdk latest blocks
             latestBlockSdk = getCasperService().getBlock();
             contextMap.put("blockDataSdk", latestBlockSdk);
@@ -296,7 +296,7 @@ public class BlockStepDefinitions {
         latestBlockNode.get("proofs").findValues("signature").forEach(
                 p -> assertThat((int) proofsSdk.stream().filter(q -> p.asText().equals(q.getSignature().toString())).count(), is(1))
         );
-   }
+    }
 
     @Given("that chain transfer data is initialised")
     public void thatChainTransferDataIsInitialised() throws IOException {

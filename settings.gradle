@@ -1,6 +1,8 @@
 rootProject.name = 'cspr-java-sdk-evaluation'
+/* Temporarily disabled util all tests are completed
 sourceControl {
     gitRepository("https://github.com/stormeye2000/casper-java-sdk.git") {
         producesModule("network.casper:casper-java-sdk")
     }
 }
+*/

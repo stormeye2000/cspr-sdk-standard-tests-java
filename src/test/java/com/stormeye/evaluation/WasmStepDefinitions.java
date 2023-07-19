@@ -23,11 +23,7 @@ import com.casper.sdk.model.stateroothash.StateRootHashData;
 import com.casper.sdk.model.storedvalue.StoredValueAccount;
 import com.casper.sdk.model.storedvalue.StoredValueData;
 import com.casper.sdk.service.CasperService;
-import com.stormeye.exception.NotImplementedException;
-import com.stormeye.utils.AssetUtils;
-import com.stormeye.utils.CasperClientProvider;
-import com.stormeye.utils.ContextMap;
-import com.stormeye.utils.DeployUtils;
+import com.stormeye.utils.*;
 import com.syntifi.crypto.key.Ed25519PrivateKey;
 import com.syntifi.crypto.key.encdec.Hex;
 import dev.oak3.sbs4j.exception.ValueSerializationException;
@@ -100,14 +96,12 @@ public class WasmStepDefinitions {
 
         this.contextMap.put("faucetPrivateKey", privateKey);
 
-
         final List<NamedArg<?>> paymentArgs = new LinkedList<>();
         //paymentArgs.add(new NamedArg<>("amount", new CLValueU512(payment)));
         paymentArgs.add(new NamedArg<>("token_decimals", new CLValueU8(tokenDecimals)));
         paymentArgs.add(new NamedArg<>("token_name", new CLValueString(tokenName)));
         paymentArgs.add(new NamedArg<>("token_symbol", new CLValueString(tokenSymbol)));
         paymentArgs.add(new NamedArg<>("token_total_supply", new CLValueU256(tokenTotalSupply)));
-
 
         final ModuleBytes session = ModuleBytes.builder().bytes(bytes).args(paymentArgs).build();
         final ModuleBytes paymentModuleBytes = getPaymentModuleBytes(payment);
@@ -158,6 +152,7 @@ public class WasmStepDefinitions {
 
         final StateRootHashData stateRootHash = this.casperService.getStateRootHash();
         this.contextMap.put("stateRootHash", stateRootHash.getStateRootHash());
+        //noinspection deprecation
         final StoredValueData stateItem = this.casperService.getStateItem(
                 stateRootHash.getStateRootHash(),
                 key.getDictionary(),
@@ -187,6 +182,7 @@ public class WasmStepDefinitions {
         final String stateRootHash = this.contextMap.get("stateRootHash");
         final String contractHash = this.contextMap.get("contractHash");
 
+        //noinspection deprecation
         final StoredValueData stateItem = this.casperService.getStateItem(
                 stateRootHash,
                 contractHash,
@@ -197,7 +193,7 @@ public class WasmStepDefinitions {
         final AbstractCLValue clValue = (AbstractCLValue) stateItem.getStoredValue().getValue();
         assertThat(clValue.getClType().getTypeName(), is(typeName));
 
-        final Object expectedValue = convertToCLTypeValue(typeName, value);
+        final Object expectedValue = CLTypeUtils.convertToCLTypeValue(typeName, value);
         assertThat(clValue.getValue(), is(expectedValue));
 
         assertThat(clValue.getBytes(), is(hexBytes));
@@ -227,12 +223,11 @@ public class WasmStepDefinitions {
                 identifier
         );
 
-        final AbstractCLValue clValue = (AbstractCLValue) stateDictionaryItem.getStoredValue().getValue();
+        final AbstractCLValue<?, ?> clValue = (AbstractCLValue<?, ?>) stateDictionaryItem.getStoredValue().getValue();
         assertThat(clValue.getClType().getTypeName(), is(typeName));
 
-        final Object expectedValue = convertToCLTypeValue(typeName, value);
+        final Object expectedValue = CLTypeUtils.convertToCLTypeValue(typeName, value);
         assertThat(clValue.getValue(), is(expectedValue));
-
         assertThat(clValue.getBytes(), is(hexBytes));
     }
 
@@ -244,11 +239,12 @@ public class WasmStepDefinitions {
         final Ed25519PrivateKey recipientPrivateKey = Ed25519PrivateKey.deriveRandomKey();
         final PublicKey recipient = PublicKey.fromAbstractPublicKey(recipientPrivateKey.derivePublicKey());
         final BigInteger amount = new BigInteger(transferAmount);
-        final String contractHash = ((String)this.contextMap.get("contractHash")).substring(5);
+        final String contractHash = ((String) this.contextMap.get("contractHash")).substring(5);
         final Ed25519PrivateKey faucetPrivateKey = this.contextMap.get("faucetPrivateKey");
+        final String accountHash = recipient.generateAccountHash(false);
 
         final List<NamedArg<?>> args = Arrays.asList(
-                new NamedArg<>("recipient", new CLValuePublicKey(recipient)),
+                new NamedArg<>("recipient", new CLValueByteArray(Hex.decode(accountHash))),
                 new NamedArg<>("amount", new CLValueU256(amount))
         );
 
@@ -271,7 +267,7 @@ public class WasmStepDefinitions {
                 new ArrayList<>()
         );
 
-        DeployResult deployResult = this.casperService.putDeploy(transferDeploy);
+        final DeployResult deployResult = this.casperService.putDeploy(transferDeploy);
 
         assertThat(deployResult.getDeployHash(), is(notNullValue()));
 
@@ -281,20 +277,14 @@ public class WasmStepDefinitions {
     @Then("the contract invocation deploy is successful")
     public void theContractInvocationDeployIsSuccessful() {
 
-    }
 
-    private static Object convertToCLTypeValue(final String typeName, final String value) {
-        switch (typeName) {
-            case "String":
-                return value;
-            case "U8":
-                return Byte.parseByte(value);
-            case "U256":
-                return new BigInteger(value);
-            default:
-                throw new NotImplementedException("Not implemented conversion for type " + typeName);
-        }
-    }
+        final Deploy transferDeploy = this.contextMap.get("transferDeploy");
+        final DeployData deployData = DeployUtils.waitForDeploy(transferDeploy.getHash().toString(), 300, casperService);
 
+        assertThat(deployData, is(notNullValue()));
+        assertThat(deployData.getDeploy(), is(notNullValue()));
+        assertThat(deployData.getExecutionResults(), is(not(empty())));
+        assertThat(deployData.getExecutionResults().get(0).getResult(), is(instanceOf(Success.class)));
+    }
 
 }

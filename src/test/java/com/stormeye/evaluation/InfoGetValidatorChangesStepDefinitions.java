@@ -28,7 +28,7 @@ public class InfoGetValidatorChangesStepDefinitions {
     private final ContextMap contextMap = ContextMap.getInstance();
     private final Logger logger = LoggerFactory.getLogger(StateGetDictionaryItemStepDefinitions.class);
     private final TestProperties testProperties = new TestProperties();
-    private final SimpleRcpClient simpleRcpClient  = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
+    private final SimpleRcpClient simpleRcpClient = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
 
     @Given("that the info_get_validator_changes method is invoked against a node")
     public void thatTheInfo_get_validator_changesMethodIsInvokedAgainstNode() throws Exception {

@@ -40,7 +40,9 @@ public class TestProperties {
         return ssePort;
     }
 
-    public String getDockerName() { return dockerName; }
+    public String getDockerName() {
+        return dockerName;
+    }
 
     private String getProperty(final String name, final String defaultValue) {
         final String property = System.getProperty(name);
