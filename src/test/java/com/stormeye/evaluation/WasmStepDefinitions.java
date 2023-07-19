@@ -161,7 +161,7 @@ public class WasmStepDefinitions {
         assertThat(stateItem, is(notNullValue()));
         assertThat(stateItem.getStoredValue(), is(instanceOf(StoredValueAccount.class)));
 
-        Account account = (Account) stateItem.getStoredValue().getValue();
+        final Account account = (Account) stateItem.getStoredValue().getValue();
         assertThat(account.getAssociatedKeys(), is(not(empty())));
         account.getNamedKeys().forEach((NamedKey namedKey) -> {
                     assertThat(namedKey.getName(), startsWithIgnoringCase(contractName));
