@@ -343,7 +343,7 @@ public class DeployStepDefinitions {
         assertThat(getDeployData().getDeploy().getHeader().getTimeStamp(), is(timestamp));
     }
 
-    private  DeployData getDeployData() {
+    private DeployData getDeployData() {
         return contextMap.get(INFO_GET_DEPLOY);
     }
 

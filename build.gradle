@@ -16,13 +16,7 @@ repositories {
 
 dependencies {
 
-//    implementation('network.casper:casper-java-sdk') {
-//        version {
-//            branch = 'main'
-//        }
-//    }
-
-    implementation files("libs/casper-java-sdk-${casperSdkVersion}.jar")
+    implementation "network.casper:casper-java-sdk:${casperSdkVersion}"
     implementation "dev.oak3:sbs4j:${sbs4jVersion}"
     implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
     implementation "com.syntifi.crypto:crypto-key-common:${cryptokeyVersion}"

@@ -37,7 +37,7 @@ public class EraStepDefinitions {
     private final Logger logger = LoggerFactory.getLogger(EraStepDefinitions.class);
     public final CasperService casperService = CasperClientProvider.getInstance().getCasperService();
     private final TestProperties testProperties = new TestProperties();
-    private final SimpleRcpClient simpleRcpClient  = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
+    private final SimpleRcpClient simpleRcpClient = new SimpleRcpClient(testProperties.getHostname(), testProperties.getRcpPort());
 
     @Given("that the era summary is requested via the sdk")
     public void thatTheEraSummaryIsRequested() {

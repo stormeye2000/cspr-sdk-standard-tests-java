@@ -63,7 +63,7 @@ public class DeployGeneratedKeys {
         final AbstractPrivateKey sk;
         final AbstractPublicKey pk;
 
-        if (algo.equals("Ed25519")){
+        if (algo.equals("Ed25519")) {
             sk = CasperKeyHelper.createRandomEd25519Key();
             pk = CasperKeyHelper.derivePublicKey((Ed25519PrivateKey) sk);
         } else {
@@ -95,7 +95,7 @@ public class DeployGeneratedKeys {
         final AbstractPublicKey pk;
         final AbstractPrivateKey sk;
 
-        if (algo.equals("Ed25519")){
+        if (algo.equals("Ed25519")) {
             sk = CasperKeyHelper.createRandomEd25519Key();
             pk = CasperKeyHelper.derivePublicKey((Ed25519PrivateKey) sk);
         } else {
@@ -115,7 +115,7 @@ public class DeployGeneratedKeys {
     }
 
     @Then("fund the account from the faucet user with a transfer amount of {long} and a payment amount of {long}")
-    public void fundTheAccountFromTheFaucetUserWithATransferAmountOfAndAPaymentAmmountOf(long transferAmount, long paymentAmount) throws IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
+    public void fundTheAccountFromTheFaucetUserWithATransferAmountOfAndAPaymentAmountOf(long transferAmount, long paymentAmount) throws IOException, NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
         logger.info("fund the account from the faucet user with a transfer amount of {} and a payment amount of {}", transferAmount, paymentAmount);
 
         final URL faucetPrivateKeyUrl = AssetUtils.getFaucetAsset(1, "secret_key.pem");

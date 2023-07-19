@@ -1,4 +1,5 @@
 Feature: read_deploy
+
   Scenario: read_deploy
     Given that the "transfer.json" JSON deploy is loaded
     Then a valid transfer deploy is created
