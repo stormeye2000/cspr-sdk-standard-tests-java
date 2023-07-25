@@ -16,6 +16,8 @@ public abstract class StepConstants {
     public static final String EXPECTED_STATUS_DATA = "expectedStatusData";
     public static final String EXPECTED_VALIDATOR_CHANGES = "expectedValidatorChanges";
     public static final String GAS_PRICE = "gasPrice";
+
+    public static final String GET_DEPLOY = "getDeploy";
     public static final String GLOBAL_STATE_DATA = "globalStateData";
     public static final String INFO_GET_DEPLOY = "info_get_deploy";
     public static final String LAST_BLOCK_ADDED = "lastBlockAdded";
