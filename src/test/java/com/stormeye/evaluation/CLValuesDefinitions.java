@@ -57,7 +57,7 @@ public class CLValuesDefinitions {
 
         logger.info("Given that a CL value of type {} has a value of {}", typeName, strValue);
 
-        AbstractCLValue<?, ?> value = cLValueFactory.createValue(CLTypeData.getTypeByName(typeName), strValue);
+        final AbstractCLValue<?, ?> value = cLValueFactory.createValue(CLTypeData.getTypeByName(typeName), strValue);
 
         addValueToContext(value);
     }
@@ -139,7 +139,7 @@ public class CLValuesDefinitions {
     public void theDeployIsObtainedFromTheNode() {
 
         final DeployResult deployResult = this.contextMap.get(DEPLOY_RESULT);
-        DeployData deploy = this.casperService.getDeploy(deployResult.getDeployHash());
+        final DeployData deploy = this.casperService.getDeploy(deployResult.getDeployHash());
         assertThat(deploy, is(notNullValue()));
         this.contextMap.put(GET_DEPLOY, deploy);
     }
@@ -165,11 +165,9 @@ public class CLValuesDefinitions {
     @Given("that the CL complex value of type {string} with an internal types of {string} values of {string}")
     public void thatTheCLComplexValueOfTypeWithAnInternalTypesOfValuesOf(final String type, final String innerTypes, final String innerValues) throws Exception {
 
-        List<CLTypeData> types = getInnerClTypeData(innerTypes);
-
-        List<String> values = Arrays.asList(innerValues.split(","));
-
-        AbstractCLValue<?, ?> complexValue = this.cLValueFactory.createComplexValue(CLTypeData.getTypeByName(type), types, values);
+        final List<CLTypeData> types = getInnerClTypeData(innerTypes);
+        final List<String> values = Arrays.asList(innerValues.split(","));
+        final AbstractCLValue<?, ?> complexValue = this.cLValueFactory.createComplexValue(CLTypeData.getTypeByName(type), types, values);
         this.addValueToContext(complexValue);
     }
 
@@ -248,6 +246,7 @@ public class CLValuesDefinitions {
     }
 
     private void assertTupleThree(final CLValueTuple3 clValue, final String types, final String values) throws Exception {
+
         final CLValueTuple3 complexValue = (CLValueTuple3) this.cLValueFactory.createComplexValue(CLTypeData.TUPLE3, getInnerClTypeData(types), Arrays.asList(values.split(",")));
 
         assertClValues(clValue.getValue().getValue0(), complexValue.getValue().getValue0());
@@ -277,12 +276,14 @@ public class CLValuesDefinitions {
     }
 
     private void assertClValues(final AbstractCLValue<?, ?> actual, final AbstractCLValue<?, ?> expected) {
+
         assertThat(actual.getValue(), is(expected.getValue()));
         assertThat(actual.getClType(), is(expected.getClType()));
     }
 
 
-    private void addValueToContext(AbstractCLValue<?, ?> value) {
+    private void addValueToContext(final AbstractCLValue<?, ?> value) {
+
         contextMap.put("clValue", value);
 
         List<NamedArg<?>> clValues = contextMap.get("clValues");
