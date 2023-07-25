@@ -1,6 +1,13 @@
 package com.stormeye.utils;
 
+import com.casper.sdk.model.clvalue.cltype.CLTypeData;
+import com.casper.sdk.model.key.Key;
+import com.casper.sdk.model.key.PublicKey;
+import com.casper.sdk.model.uref.URef;
+import com.casper.sdk.model.uref.URefAccessRight;
 import com.stormeye.exception.NotImplementedException;
+import com.stormeye.exception.TestException;
+import com.syntifi.crypto.key.encdec.Hex;
 
 import java.math.BigInteger;
 
@@ -19,15 +26,37 @@ public class CLTypeUtils {
      * @return the CLValue's internal parsed value
      */
     public static Object convertToCLTypeValue(final String typeName, final String value) {
-        switch (typeName) {
-            case "String":
-                return value;
-            case "U8":
-                return Byte.parseByte(value);
-            case "U256":
-                return new BigInteger(value);
-            default:
-                throw new NotImplementedException("Not implemented conversion for type " + typeName);
+        try {
+            switch (CLTypeData.getTypeByName(typeName)) {
+                case STRING:
+                    return value;
+                case U8:
+                    return Byte.parseByte(value);
+                case U32:
+                case I64:
+                    return Long.valueOf(value);
+                case U64:
+                case U256:
+                    return new BigInteger(value);
+                case BOOL:
+                    return Boolean.valueOf(value);
+                case I32:
+                    return Integer.valueOf(value);
+                case BYTE_ARRAY:
+                    return Hex.decode(value);
+                case KEY:
+                    return Key.fromTaggedHexString(value);
+                case PUBLIC_KEY:
+                    return PublicKey.fromTaggedHexString(value);
+                case UREF:
+                    return new URef(Hex.decode(value), URefAccessRight.READ_ADD_WRITE);
+              //  case OPTION:
+              //      return
+                default:
+                    throw new NotImplementedException("Not implemented conversion for type " + typeName);
+            }
+        } catch (Exception e) {
+            throw new TestException(e);
         }
     }
 }
