@@ -30,28 +30,36 @@ public class CLTypeUtils {
             switch (CLTypeData.getTypeByName(typeName)) {
                 case STRING:
                     return value;
+
                 case U8:
                     return Byte.parseByte(value);
+
                 case U32:
                 case I64:
                     return Long.valueOf(value);
+
                 case U64:
                 case U256:
                     return new BigInteger(value);
+
                 case BOOL:
                     return Boolean.valueOf(value);
+
                 case I32:
                     return Integer.valueOf(value);
+
                 case BYTE_ARRAY:
                     return Hex.decode(value);
+
                 case KEY:
                     return Key.fromTaggedHexString(value);
+
                 case PUBLIC_KEY:
                     return PublicKey.fromTaggedHexString(value);
+
                 case UREF:
                     return new URef(Hex.decode(value), URefAccessRight.READ_ADD_WRITE);
-              //  case OPTION:
-              //      return
+
                 default:
                     throw new NotImplementedException("Not implemented conversion for type " + typeName);
             }
