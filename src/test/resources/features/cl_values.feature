@@ -36,8 +36,8 @@ Feature: CL Values
     Then it's bytes will be "0400000041434d451027000000"
     Given that the CL complex value of type "List" with an internal types of "String,String,String,String,String" values of "Alpha,Beta,Gama,Delta,Epsilon"
     Then it's bytes will be "0500000005000000416c70686104000000426574610400000047616d610500000044656c746107000000457073696c6f6e"
-    # Given that the CL complex value of type "Map" with an internal types of "String,U32,Bool" values of "ACME,20000,true"
-    # Then it's bytes will be "0300000001000000300400000041434d450100000031204e0000010000003201"
+    Given that the CL complex value of type "Map" with an internal types of "String,String,String" values of "ACME,20000,true"
+    Then it's bytes will be "0300000001000000300400000041434d45010000003105000000323030303001000000320400000074727565"
     When the values are added as arguments to a deploy
     And the deploy is put on chain
     Then the deploy response contains a valid deploy hash of length 64 and an API version "1.0.0"
@@ -60,7 +60,7 @@ Feature: CL Values
     And the deploys NamedArgument Complex value "Tuple2" has internal types of "String,U32" and values of "ACME,10000" and bytes of "0400000041434d4510270000"
     And the deploys NamedArgument Complex value "Tuple3" has internal types of "String,U32,Bool" and values of "ACME,10000,false" and bytes of "0400000041434d451027000000"
     And the deploys NamedArgument Complex value "List" has internal types of "String,String,String,String,String" and values of "Alpha,Beta,Gama,Delta,Epsilon" and bytes of "0500000005000000416c70686104000000426574610400000047616d610500000044656c746107000000457073696c6f6e"
-    # And the deploys NamedArgument Complex value "Map" has internal types of "String,U32,Bool" and values of "ACME,20000,true" and bytes of "0300000001000000300400000041434d450100000031204e0000010000003201"
+    And the deploys NamedArgument Complex value "Map" has internal types of "String,String,String" and values of "ACME,20000,true" and bytes of "0300000001000000300400000041434d45010000003105000000323030303001000000320400000074727565"
 
 
 
