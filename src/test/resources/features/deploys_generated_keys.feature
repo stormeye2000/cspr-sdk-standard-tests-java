@@ -7,7 +7,7 @@ Feature: deploys_generated_keys
     Given that a "Ed25519" receiver key is generated
     Then transfer to the receiver account the transfer amount of 2500000000 and the payment amount of 100000
     Then wait for a block added event with a timeout of 300 seconds
-    And the returned block header proposer contains the "Ed25519" algo
+    And the transfer approvals signer contains the "Ed25519" algo
 
   Scenario: Generate "Secp256k1" Account
     Given that a "Secp256k1" sender key is generated
@@ -16,4 +16,4 @@ Feature: deploys_generated_keys
     Given that a "Secp256k1" receiver key is generated
     Then transfer to the receiver account the transfer amount of 2500000000 and the payment amount of 100000
     Then wait for a block added event with a timeout of 300 seconds
-    And the returned block header proposer contains the "Secp256k1" algo
+    And the transfer approvals signer contains the "Secp256k1" algo

@@ -83,7 +83,6 @@ public class DeployGeneratedKeys {
 
         contextMap.put(SENDER_KEY_SK, sk);
         contextMap.put(SENDER_KEY_PK, pk);
-
     }
 
 
@@ -111,7 +110,6 @@ public class DeployGeneratedKeys {
         assertThat(pk.getKey(), is(notNullValue()));
 
         contextMap.put(RECEIVER_KEY, pk);
-
     }
 
     @Then("fund the account from the faucet user with a transfer amount of {long} and a payment amount of {long}")
@@ -127,7 +125,6 @@ public class DeployGeneratedKeys {
         contextMap.put(PAYMENT_AMOUNT, paymentAmount);
 
         doDeploy(privateKey, contextMap.get(SENDER_KEY_PK));
-
     }
 
     @Then("transfer to the receiver account the transfer amount of {long} and the payment amount of {long}")
@@ -138,10 +135,9 @@ public class DeployGeneratedKeys {
         contextMap.put(PAYMENT_AMOUNT, paymentAmount);
 
         doDeploy(contextMap.get(SENDER_KEY_SK), contextMap.get(RECEIVER_KEY));
-
     }
 
-    @And("the returned block header proposer contains the {string} algo")
+    @And("the transfer approvals signer contains the {string} algo")
     public void theReturnedBlockHeaderProposerContainsTheAlgo(String algo) {
         logger.info("the returned block header proposer contains the {} algo", algo);
 
@@ -149,7 +145,6 @@ public class DeployGeneratedKeys {
         final JsonBlockData block = CasperClientProvider.getInstance().getCasperService().getBlock(new HashBlockIdentifier(matchingBlockHash.toString()));
 
         assertThat(block.getBlock().getBody().getProposer().getTag().toString().toUpperCase(), is(algo.toUpperCase(Locale.ROOT)));
-
     }
 
     private void doDeploy(final AbstractPrivateKey sk, final AbstractPublicKey pk) throws NoSuchTypeException, GeneralSecurityException, ValueSerializationException {
@@ -172,6 +167,4 @@ public class DeployGeneratedKeys {
 
         contextMap.put(DEPLOY_RESULT, casperService.putDeploy(deploy));
     }
-
-
 }
