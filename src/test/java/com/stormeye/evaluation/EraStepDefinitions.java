@@ -61,9 +61,7 @@ public class EraStepDefinitions {
         final JsonNode nodeEraSummary = simpleRcpClient.getEraSummary(contextMap.get("blockHash"));
 
         contextMap.put("nodeEraSummary", nodeEraSummary.get("result").get("era_summary"));
-
     }
-
 
     @And("the block hash of the returned era summary is equal to the block hash of the test node era summary")
     public void theBlockHashOfTheReturnedEraSummaryIsEqualToTheBlockHashOfTheTestNodeEraSummary() {
@@ -74,9 +72,7 @@ public class EraStepDefinitions {
         final JsonNode nodeEraSummary = contextMap.get("nodeEraSummary");
         final String blockHash = nodeEraSummary.get("block_hash").textValue();
 
-        assertThat(blockHash.equals(eraSummary.getEraSummary().getBlockHash()), is(true));
-
-
+        assertThat(blockHash, is(eraSummary.getEraSummary().getBlockHash()));
     }
 
     @And("the era of the returned era summary is equal to the era of the returned test node era summary")
@@ -89,7 +85,6 @@ public class EraStepDefinitions {
         final Long eraId = nodeEraSummary.get("era_id").asLong();
 
         assertThat(eraId, is(eraSummary.getEraSummary().getEraId()));
-
     }
 
     @And("the merkle proof of the returned era summary is equal to the merkle proof of the returned test node era summary")
@@ -100,11 +95,10 @@ public class EraStepDefinitions {
         final EraInfoData eraSummary = contextMap.get("eraSummary");
         final JsonNode nodeEraSummary = contextMap.get("nodeEraSummary");
 
-        assertThat(eraSummary.getEraSummary().getMerkleProof().equals(nodeEraSummary.get("merkle_proof").asText()), is(true));
+        assertThat(eraSummary.getEraSummary().getMerkleProof(), is(nodeEraSummary.get("merkle_proof").asText()));
 
         final Digest digest = new Digest(eraSummary.getEraSummary().getMerkleProof());
         assertThat(digest.isValid(), is(true));
-
     }
 
     @And("the state root hash of the returned era summary is equal to the state root hash of the returned test node era summary")
@@ -115,7 +109,7 @@ public class EraStepDefinitions {
         final EraInfoData eraSummary = contextMap.get("eraSummary");
         final JsonNode nodeEraSummary = contextMap.get("nodeEraSummary");
 
-        assertThat(nodeEraSummary.get("state_root_hash").asText().equals(eraSummary.getEraSummary().getStateRootHash()), is(true));
+        assertThat(nodeEraSummary.get("state_root_hash").asText(), is(eraSummary.getEraSummary().getStateRootHash()));
     }
 
     @And("the delegators data of the returned era summary is equal to the delegators data of the returned test node era summary")
@@ -143,11 +137,10 @@ public class EraStepDefinitions {
                             .collect(Collectors.toList());
 
                     assertThat(found.isEmpty(), is(false));
-                    assertThat(d.get("validator_public_key").asText().equals(((Delegator) found.get(0)).getValidatorPublicKey().toString()), is(true));
-                    assertThat(d.get("amount").asText().equals(found.get(0).getAmount().toString()), is(true));
+                    assertThat(d.get("validator_public_key").asText(), is(((Delegator) found.get(0)).getValidatorPublicKey().toString()));
+                    assertThat(d.get("amount").asText(), is(found.get(0).getAmount().toString()));
                 }
         );
-
     }
 
     @And("the validators data of the returned era summary is equal to the validators data of the returned test node era summary")
@@ -175,10 +168,9 @@ public class EraStepDefinitions {
                             .collect(Collectors.toList());
 
                     assertThat(found.isEmpty(), is(false));
-                    assertThat(d.get("amount").asText().equals(found.get(0).getAmount().toString()), is(true));
+                    assertThat(d.get("amount").asText(), is(found.get(0).getAmount().toString()));
                 }
         );
-
     }
 
     private PublicKey getPublicKey(final String key) {
@@ -190,5 +182,4 @@ public class EraStepDefinitions {
             throw new RuntimeException(e);
         }
     }
-
 }
