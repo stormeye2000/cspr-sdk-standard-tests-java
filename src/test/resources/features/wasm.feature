@@ -10,11 +10,18 @@ Feature: wasm operations
     And the contract data "decimals" is a "U8" with a value of "11" and bytes of "0b"
     And the contract data "total_supply" is a "U256" with a value of "500000000000" and bytes of "050088526a74"
  #   And the contract dictionary item "balances" is a "U256" with a value of "500000000000" and bytes of "050088526a74"
-
     When the contract entry point is invoked by hash with a transfer amount of "2500000000"
     Then the contract invocation deploy is successful
 
     When the the contract is invoked by name "ERC20" and a transfer amount of "2400000000"
     Then the contract invocation deploy is successful
+
+    When the the contract is invoked by hash and version with a transfer amount of "2500000000"
+    Then the contract invocation deploy is successful
+
+    When the the contract is invoked by name "ERC20" and version with a transfer amount of "2400000000"
+    Then the contract invocation deploy is successful
+
+
 
 

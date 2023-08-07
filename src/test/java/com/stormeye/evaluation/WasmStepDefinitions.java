@@ -14,9 +14,7 @@ import com.casper.sdk.model.deploy.Deploy;
 import com.casper.sdk.model.deploy.DeployData;
 import com.casper.sdk.model.deploy.DeployResult;
 import com.casper.sdk.model.deploy.NamedArg;
-import com.casper.sdk.model.deploy.executabledeploy.ModuleBytes;
-import com.casper.sdk.model.deploy.executabledeploy.StoredContractByHash;
-import com.casper.sdk.model.deploy.executabledeploy.StoredContractByName;
+import com.casper.sdk.model.deploy.executabledeploy.*;
 import com.casper.sdk.model.deploy.executionresult.Success;
 import com.casper.sdk.model.dictionary.DictionaryData;
 import com.casper.sdk.model.key.PublicKey;
@@ -103,6 +101,7 @@ public class WasmStepDefinitions {
         paymentArgs.add(new NamedArg<>("token_name", new CLValueString(tokenName)));
         paymentArgs.add(new NamedArg<>("token_symbol", new CLValueString(tokenSymbol)));
         paymentArgs.add(new NamedArg<>("token_total_supply", new CLValueU256(tokenTotalSupply)));
+
 
         final ModuleBytes session = ModuleBytes.builder().bytes(bytes).args(paymentArgs).build();
         final ModuleBytes paymentModuleBytes = getPaymentModuleBytes(payment);
@@ -305,6 +304,88 @@ public class WasmStepDefinitions {
         final StoredContractByName session = StoredContractByName.builder()
                 .name(contractName.toUpperCase())
                 .entryPoint("transfer")
+                .args(args)
+                .build();
+
+        final ModuleBytes payment = getPaymentModuleBytes(new BigInteger("2500000000"));
+
+        final String chainName = "casper-net-1";
+        final Deploy transferDeploy = CasperDeployHelper.buildDeploy(faucetPrivateKey,
+                chainName,
+                session,
+                payment,
+                1L,
+                Ttl.builder().ttl("30m").build(),
+                new Date(),
+                new ArrayList<>()
+        );
+
+        final DeployResult deployResult = this.casperService.putDeploy(transferDeploy);
+
+        assertThat(deployResult.getDeployHash(), is(notNullValue()));
+
+        this.contextMap.put("transferDeploy", transferDeploy);
+    }
+
+    @When("the the contract is invoked by name {string} and version with a transfer amount of {string}")
+    public void theTheContractIsInvokedByNameAndVersionWithATransferAmountOf(final String contractName, final String transferAmount) throws Exception {
+        final Ed25519PrivateKey recipientPrivateKey = Ed25519PrivateKey.deriveRandomKey();
+        final PublicKey recipient = PublicKey.fromAbstractPublicKey(recipientPrivateKey.derivePublicKey());
+        final BigInteger amount = new BigInteger(transferAmount);
+        final Ed25519PrivateKey faucetPrivateKey = this.contextMap.get("faucetPrivateKey");
+        final String accountHash = recipient.generateAccountHash(false);
+
+        final List<NamedArg<?>> args = Arrays.asList(
+                new NamedArg<>("recipient", new CLValueByteArray(Hex.decode(accountHash))),
+                new NamedArg<>("amount", new CLValueU256(amount))
+        );
+
+        final StoredVersionedContractByName session = StoredVersionedContractByName.builder()
+                .name(contractName.toUpperCase())
+                .version(1L)
+                .entryPoint("transfer")
+                .args(args)
+                .build();
+
+        final ModuleBytes payment = getPaymentModuleBytes(new BigInteger("2500000000"));
+
+        final String chainName = "casper-net-1";
+        final Deploy transferDeploy = CasperDeployHelper.buildDeploy(faucetPrivateKey,
+                chainName,
+                session,
+                payment,
+                1L,
+                Ttl.builder().ttl("30m").build(),
+                new Date(),
+                new ArrayList<>()
+        );
+
+        final DeployResult deployResult = this.casperService.putDeploy(transferDeploy);
+
+        assertThat(deployResult.getDeployHash(), is(notNullValue()));
+
+        this.contextMap.put("transferDeploy", transferDeploy);
+    }
+
+    @When("the the contract is invoked by hash and version with a transfer amount of {string}")
+    public void theTheContractIsInvokedByHashAndVersionWithATransferAmountOf(String transferAmount) throws Exception {
+        // Create new recipient
+        final Ed25519PrivateKey recipientPrivateKey = Ed25519PrivateKey.deriveRandomKey();
+        final PublicKey recipient = PublicKey.fromAbstractPublicKey(recipientPrivateKey.derivePublicKey());
+        final BigInteger amount = new BigInteger(transferAmount);
+        final String contractHash = ((String) this.contextMap.get("contractHash")).substring(5);
+        final Ed25519PrivateKey faucetPrivateKey = this.contextMap.get("faucetPrivateKey");
+        final String accountHash = recipient.generateAccountHash(false);
+
+        final List<NamedArg<?>> args = Arrays.asList(
+                new NamedArg<>("recipient", new CLValueByteArray(Hex.decode(accountHash))),
+                new NamedArg<>("amount", new CLValueU256(amount))
+        );
+
+        final StoredVersionedContractByHash session = StoredVersionedContractByHash.builder()
+                .entryPoint("transfer")
+                .hash(contractHash)
+                .version(1L)
                 .args(args)
                 .build();
 
