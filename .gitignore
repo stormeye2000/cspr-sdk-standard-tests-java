@@ -17,3 +17,6 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 /assets/
 /reports/
+
+/cspr-standard-tests-resources/
+.gitmodules

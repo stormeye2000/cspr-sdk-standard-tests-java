@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+cd "$(dirname "$0")" || exit
+echo "Bootstrap installs all dependencies."
+
+echo "Installing features from git@github.com:stormeye2000/cspr-standard-tests-resources.git"
+
+if [ -d "../cspr-standard-test-resources" ]
+then
+    echo "cspr-standard-test-resources exists."
+else
+    echo "Cloning cspr-standard-test-resources as submodule."
+    git submodule add git@github.com:stormeye2000/cspr-standard-tests-resources.git ../cspr-standard-tests-resources
+fi
