@@ -8,14 +8,19 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Provides CURL like commands to a node to obtain raw JSON.
+ * Provides like commands to a node to obtain raw JSON.
  *
  * @author ian@meywood.com
  */
-public class CurlUtils {
+public class SimpleRcpClient {
 
-    /** Properties to obtain RCP hostname and port from */
-    private static final TestProperties testProperties = new TestProperties();
+    private final String hostname;
+    private final int port;
+
+    public SimpleRcpClient(final String hostname, final int port) {
+        this.hostname = hostname;
+        this.port = port;
+    }
 
     /**
      * Obtains auction info as a JsonNode by block hash
@@ -24,8 +29,22 @@ public class CurlUtils {
      * @return the Json result
      * @throws Exception if an IO error occurs
      */
-    public static JsonNode getAuctionInfoByHash(final String hash) throws Exception {
+    public JsonNode getAuctionInfoByHash(final String hash) throws Exception {
         return rcp("state_get_auction_info", "[{\"Hash\":  \"" + hash + "\"}]");
+    }
+
+    /**
+     * Obtains the era summary
+     * Since 1.5
+     * This replaces chain_get_era_info_by_switch_block
+     * No need now to wait for era end to query the era info
+     *
+     * @param hash the block to obtain the era summary from
+     * @return the Json result
+     * @throws Exception if an IO error occurs
+     */
+    public JsonNode getEraSummary(final String hash) throws Exception {
+        return rcp("chain_get_era_summary", "[{\"Hash\":  \"" + hash + "\"}]");
     }
 
     /**
@@ -34,7 +53,7 @@ public class CurlUtils {
      * @return the info_get_validator_changes_result node
      * @throws Exception on an IO error
      */
-    public static JsonNode getValidatorChanges() throws Exception {
+    public JsonNode getValidatorChanges() throws Exception {
         return rcp("info_get_validator_changes", "[]");
     }
 
@@ -47,7 +66,7 @@ public class CurlUtils {
      * @return the Json result
      * @throws Exception if an IO error occurs
      */
-    public static JsonNode getBalance(final String stateRootHash, final String purseUref) throws Exception {
+    public JsonNode getBalance(final String stateRootHash, final String purseUref) throws Exception {
         return rcp("state_get_balance",
                 String.format("{\"state_root_hash\":\"%s\",\"purse_uref\":\"%s\"}", stateRootHash, purseUref)
         );
@@ -61,9 +80,9 @@ public class CurlUtils {
      * @return the JsonNode of the executed RCP request
      * @throws Exception on an invalid request
      */
-    private static JsonNode rcp(final String method, final String params) throws Exception {
+    private JsonNode rcp(final String method, final String params) throws Exception {
 
-        final URL url = new URL("http", testProperties.getHostname(), testProperties.getRcpPort(), "/rpc");
+        final URL url = new URL("http", hostname, port, "/rpc");
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         final String payload = "{\"id\":\"" + System.currentTimeMillis() + "\",\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":" + params + "}";
 

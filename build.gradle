@@ -16,13 +16,7 @@ repositories {
 
 dependencies {
 
-//    implementation('network.casper:casper-java-sdk') {
-//        version {
-//            branch = 'main'
-//        }
-//    }
-
-    implementation files("libs/casper-java-sdk-${casperSdkVersion}.jar")
+    implementation "network.casper:casper-java-sdk:${casperSdkVersion}"
     implementation "dev.oak3:sbs4j:${sbs4jVersion}"
     implementation "io.github.oak:jsonrpc4j:${jsonrpc4jVersion}"
     implementation "com.syntifi.crypto:crypto-key-common:${cryptokeyVersion}"
@@ -31,6 +25,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    implementation "commons-io:commons-io:${commonsIoVersion}"
     implementation "org.javatuples:javatuples:${javaTuplesVersion}"
     implementation "joda-time:joda-time:${jodaTimeVersion}"
     implementation "org.apache.cxf:cxf-rt-rs-client:${cxfRtRsSseVersion}"
@@ -55,6 +50,14 @@ configurations {
     }
 }
 
+sourceSets {
+    test {
+        resources {
+            srcDirs += [ "$rootDir/cspr-standard-tests-resources" ]
+        }
+    }
+}
+
 task cucumberCli() {
     dependsOn assemble, testClasses
     doLast {
@@ -63,10 +66,12 @@ task cucumberCli() {
             classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
             args = [
                     '--plugin', 'pretty',
-                    '--plugin', 'html:build/reports/tests/cucumber/cucumber-report.html',
+                    '--plugin', 'html:reports/cucumber-report.html',
+                    '--plugin', 'junit:reports/cucumber-report.xml',
+                    '--plugin', 'json:reports/cucumber-report.json',
                     '--glue', 'com.stormeye.evaluation',
                     '--glue', 'com.casper.sdk',
-                    'src/test/resources/features']
+                    'cspr-standard-tests-resources/features']
         }
     }
 }

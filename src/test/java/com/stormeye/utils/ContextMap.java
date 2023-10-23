@@ -8,20 +8,20 @@ import java.util.Map;
  *
  * @author ian@meywood.com
  */
-public final class ParameterMap {
+public final class ContextMap {
 
     private final Map<String, Object> map = new LinkedHashMap<>();
 
-    private static ParameterMap instance;
+    private static ContextMap instance;
 
-    public static synchronized ParameterMap getInstance() {
+    public static synchronized ContextMap getInstance() {
         if (instance == null) {
-            instance = new ParameterMap();
+            instance = new ContextMap();
         }
         return instance;
     }
 
-    private ParameterMap() {
+    private ContextMap() {
         // Not allowed outside this class
     }
 
