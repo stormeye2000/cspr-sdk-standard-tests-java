@@ -50,6 +50,14 @@ configurations {
     }
 }
 
+sourceSets {
+    test {
+        resources {
+            srcDirs += [ "$rootDir/cspr-standard-tests-resources" ]
+        }
+    }
+}
+
 task cucumberCli() {
     dependsOn assemble, testClasses
     doLast {
@@ -63,7 +71,7 @@ task cucumberCli() {
                     '--plugin', 'json:reports/cucumber-report.json',
                     '--glue', 'com.stormeye.evaluation',
                     '--glue', 'com.casper.sdk',
-                    'src/test/resources/features']
+                    'cspr-standard-tests-resources/features']
         }
     }
 }
